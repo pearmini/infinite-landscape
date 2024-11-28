@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      d3-random:
+        specifier: ^3.0.1
+        version: 3.0.1
       htl:
         specifier: ^0.3.1
         version: 0.3.1
@@ -249,6 +252,10 @@ packages:
   '@types/estree@1.0.6':
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
 
+  d3-random@3.0.1:
+    resolution: {integrity: sha512-FXMe9GfxTxqd5D6jFsQ+DJ8BJS4E/fT5mqqdjovykEB2oFbTMDVdg1MGFxfQW+FBOGoB++k8swBrgwSHT1cUXQ==}
+    engines: {node: '>=12'}
+
   esbuild@0.21.5:
     resolution: {integrity: sha512-mg3OPMV4hXywwpoDxu3Qda5xCKQi+vCTZq8S9J/EpkhB2HzKXq4SNFZE3+NK93JYxc8VMSep+lOUSC/RVKaBqw==}
     engines: {node: '>=12'}
@@ -441,6 +448,8 @@ snapshots:
     optional: true
 
   '@types/estree@1.0.6': {}
+
+  d3-random@3.0.1: {}
 
   esbuild@0.21.5:
     optionalDependencies:
