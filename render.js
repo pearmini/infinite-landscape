@@ -7,19 +7,11 @@ function random(seed) {
   return randomLcg(seed)();
 }
 
-function generate({
-  height,
-  startX,
-  endX,
-  seedHeight,
-  seedDy,
-  seedWidth,
-  minWidth = 1 / 8,
-  maxWidth = 1 / 2,
-  offsetY = 1,
-  paddingX = 3 / 4,
-}) {
+function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 2, offsetY = 1, paddingX = 3 / 4}) {
   const w = (height / 6) * 10;
+  const seedHeight = seed;
+  const seedDy = random(seedHeight) * 1500;
+  const seedWidth = random(seedDy) * 100;
   const noiseH = randomNoise(0, (height / 8) * 5, {seed: seedHeight});
   const noiseW = randomNoise(w * minWidth, w * maxWidth, {seed: seedWidth});
   const noiseDy = randomNoise(-height / 8, height / 8, {seed: seedDy});
@@ -29,7 +21,7 @@ function generate({
   let px = 0;
   while (px < endX) {
     const gap = random(px);
-    const addGap = gap < 0.15;
+    const addGap = gap < 0.18;
     const w = noiseW(px);
     const x = px - random(px) * w * paddingX + addGap * 200;
     const y = (height / 8) * 5 + noiseDy(x) * offsetY;
@@ -59,9 +51,7 @@ export function render({
   startX = -width,
   endX = width * 2,
   currentX = 0,
-  seedHeight = 10000,
-  seedWidth = 1500,
-  seedDy = 100,
+  seed = 10000,
 } = {}) {
   let g;
   let mountains;
@@ -81,7 +71,7 @@ export function render({
   return svg.node();
 
   function update() {
-    const common = {startX, endX, height, seedHeight, seedWidth, seedDy};
+    const common = {startX, endX, height, seed};
     mountains = generate(common);
     plains = generate({...common, offsetY: 0, minWidth: 1 / 2, maxWidth: 1.5, height: height / 2});
   }
