@@ -14,14 +14,14 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
   const seedWidth = random(seedDy) * 100;
   const noiseH = randomNoise(0, (height / 8) * 5, {seed: seedHeight});
   const noiseW = randomNoise(w * minWidth, w * maxWidth, {seed: seedWidth});
-  const noiseDy = randomNoise(-height / 8, height / 8, {seed: seedDy});
+  const noiseDy = randomNoise(-height / 6, height / 6, {seed: seedDy});
 
   const primitives = [];
 
   let px = 0;
   while (px < endX) {
     const gap = random(px);
-    const addGap = gap < 0.18;
+    const addGap = gap < random(gap * 1000);
     const w = noiseW(px);
     const x = px - random(px) * w * paddingX + addGap * 200;
     const y = (height / 8) * 5 + noiseDy(x) * offsetY;
@@ -48,25 +48,19 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
 export function render({
   width = 1000,
   height = 600,
-  startX = -width,
-  endX = width * 2,
   currentX = 0,
+  startX = currentX - width,
+  endX = currentX + width * 2,
   seed = 10000,
 } = {}) {
-  let g;
   let mountains;
   let plains;
 
   update();
 
-  const svg = create("svg")
-    .attr("width", width)
-    .attr("height", height)
-    .call(setX, currentX)
-    .attr("cursor", "grab")
-    .call(draw);
-
-  svg.call(createDragX(svg));
+  const svg = create("svg").attr("width", width).attr("height", height).attr("cursor", "grab");
+  const g = svg.append("g");
+  svg.call(draw).call(createDragX());
 
   return svg.node();
 
@@ -76,14 +70,12 @@ export function render({
     plains = generate({...common, offsetY: 0, minWidth: 1 / 2, maxWidth: 1.5, height: height / 2});
   }
 
-  function setX(svg, x) {
+  function setX(x) {
     svg.attr("viewBox", [x, 0, width, height]);
   }
 
-  function draw(svg) {
-    if (g) g.remove();
-
-    g = svg.append("g");
+  function draw() {
+    g.html("");
 
     g.append("rect")
       .attr("x", startX)
@@ -116,26 +108,26 @@ export function render({
       .attr("stroke", "#000");
   }
 
-  function redraw(svg) {
+  function redraw() {
     update();
-    draw(svg);
+    draw();
   }
 
-  function createDragX(svg) {
+  function createDragX() {
     let x0 = 0;
     return drag()
       .on("start", ({x}) => (x0 = x))
-      .on("drag", ({x}) => setX(svg, currentX + x0 - x))
+      .on("drag", ({x}) => setX(currentX + x0 - x))
       .on("end", ({x}) => {
         currentX += x0 - x;
         if (currentX - startX < width) {
           startX -= width;
-          redraw(svg);
+          redraw();
         } else if (endX - currentX < width * 2) {
           endX += width;
-          redraw(svg);
+          redraw();
         }
-        setX(svg, currentX);
+        setX(currentX);
       });
   }
 }
