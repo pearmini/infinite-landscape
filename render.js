@@ -21,7 +21,7 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
   let px = 0;
   while (px < endX) {
     const gap = random(px);
-    const addGap = gap < random(gap * 1000);
+    const addGap = gap < 0.18;
     const w = noiseW(px);
     const x = px - random(px) * w * paddingX + addGap * 200;
     const y = (height / 8) * 5 + noiseDy(x) * offsetY;

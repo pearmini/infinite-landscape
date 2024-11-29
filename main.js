@@ -1,5 +1,8 @@
 import {render} from "./render.js";
 
-const container = document.querySelector("#container");
+const node = render({
+  width: window.innerWidth,
+  seed: process.env.NODE_ENV === "development" ? 10000 : Date.now(),
+});
 
-container.appendChild(render({width: window.innerWidth}));
+document.querySelector("#container").appendChild(node);
