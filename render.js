@@ -2,6 +2,7 @@ import {randomNoise} from "./noise.js";
 import {create} from "d3-selection";
 import {randomLcg} from "d3-random";
 import {drag} from "d3-drag";
+import {zoom} from "d3-zoom";
 
 function random(seed) {
   return randomLcg(seed)();
@@ -14,7 +15,7 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
   const seedWidth = random(seedDy) * 100;
   const noiseH = randomNoise(0, (height / 8) * 5, {seed: seedHeight});
   const noiseW = randomNoise(w * minWidth, w * maxWidth, {seed: seedWidth});
-  const noiseDy = randomNoise(-height / 6, height / 6, {seed: seedDy});
+  const noiseDy = randomNoise(-height / 5, height / 5, {seed: seedDy});
 
   const primitives = [];
 
@@ -24,7 +25,7 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
     const addGap = gap < 0.18;
     const w = noiseW(px);
     const x = px - random(px) * w * paddingX + addGap * 200;
-    const y = (height / 8) * 5 + noiseDy(x) * offsetY;
+    const y = Math.max(height / 2 + 10, (height / 8) * 5 + noiseDy(x) * offsetY);
     const h = noiseH(x + w / 2);
     px = x + w;
     primitives.push({x: x, y: y, x1: x + w / 2, y1: y - h, x2: x + w, y2: y});
@@ -33,10 +34,10 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
   px = 0;
   while (startX < px) {
     const gap = random(px);
-    const addGap = gap < 0.15;
+    const addGap = gap < 0.18;
     const w = noiseW(px);
     const x = px - w + random(px) * w * paddingX - addGap * 200;
-    const y = (height / 8) * 5 + noiseDy(x) * offsetY;
+    const y = Math.max(height / 2 + 10, (height / 8) * 5 + noiseDy(x) * offsetY);
     const h = noiseH(x + w / 2);
     px = x;
     primitives.push({x: x, y: y, x1: x + w / 2, y1: y - h, x2: x + w, y2: y});
@@ -51,16 +52,23 @@ export function render({
   currentX = 0,
   startX = currentX - width,
   endX = currentX + width * 2,
+  translateX = 0,
+  scaleX = 1,
   seed = 10000,
 } = {}) {
   let mountains;
   let plains;
+  let rect;
 
   update();
 
   const svg = create("svg").attr("width", width).attr("height", height).attr("cursor", "grab");
   const g = svg.append("g");
-  svg.call(draw).call(createDragX());
+  svg
+    .call(draw)
+    .call(createDragX())
+    .call(createZoom())
+    .call(() => setScale(scaleX, translateX));
 
   return svg.node();
 
@@ -71,13 +79,21 @@ export function render({
   }
 
   function setX(x) {
-    svg.attr("viewBox", [x, 0, width, height]);
+    const h = height * scaleX;
+    svg.attr("viewBox", [x, 0, width, h]);
+  }
+
+  function setScale(scaleX, translateX) {
+    const h = height * scaleX;
+    svg.attr("height", h).attr("viewBox", [currentX, 0, width, h]);
+    g.attr("transform", `translate(${translateX}, 0) scale(${scaleX})`);
   }
 
   function draw() {
     g.html("");
 
-    g.append("rect")
+    rect = g
+      .append("rect")
       .attr("x", startX)
       .attr("width", endX - startX)
       .attr("height", height)
@@ -116,18 +132,35 @@ export function render({
   function createDragX() {
     let x0 = 0;
     return drag()
-      .on("start", ({x}) => (x0 = x))
+      .on("start", ({x}) => ((x0 = x), maybeLoad()))
       .on("drag", ({x}) => setX(currentX + x0 - x))
       .on("end", ({x}) => {
         currentX += x0 - x;
-        if (currentX - startX < width) {
-          startX -= width;
-          redraw();
-        } else if (endX - currentX < width * 2) {
-          endX += width;
-          redraw();
-        }
         setX(currentX);
+      });
+  }
+
+  function maybeLoad() {
+    const {x: rx, width: rw} = rect.node().getBoundingClientRect();
+    let needRedraw = false;
+    if (-width < rx) {
+      startX -= width / scaleX;
+      needRedraw = true;
+    }
+    if (rx + rw < width * 2) {
+      endX += width / scaleX;
+      needRedraw = true;
+    }
+    if (needRedraw) redraw();
+  }
+
+  function createZoom() {
+    return zoom()
+      .scaleExtent([0.15, 1])
+      .on("zoom", ({transform}) => {
+        const {x, k} = transform;
+        setScale((scaleX = k), (translateX = x));
+        maybeLoad();
       });
   }
 }
