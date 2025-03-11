@@ -1,8 +1,5 @@
-import {randomNoise} from "./noise.js";
-import {create} from "d3-selection";
 import {randomLcg} from "d3-random";
-import {drag} from "d3-drag";
-import {zoom} from "d3-zoom";
+import {cm} from "./namspaces.js";
 
 function random(seed) {
   return randomLcg(seed)();
@@ -13,9 +10,9 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
   const seedHeight = seed;
   const seedDy = random(seedHeight) * 1500;
   const seedWidth = random(seedDy) * 100;
-  const noiseH = randomNoise(0, (height / 8) * 5, {seed: seedHeight});
-  const noiseW = randomNoise(w * minWidth, w * maxWidth, {seed: seedWidth});
-  const noiseDy = randomNoise(-height / 5, height / 5, {seed: seedDy});
+  const noiseH = cm.randomNoise(0, (height / 8) * 5, {seed: seedHeight});
+  const noiseW = cm.randomNoise(w * minWidth, w * maxWidth, {seed: seedWidth});
+  const noiseDy = cm.randomNoise(-height / 5, height / 5, {seed: seedDy});
 
   const primitives = [];
 
@@ -36,7 +33,7 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
     const gap = random(px);
     const addGap = gap < 0.18;
     const w = noiseW(px);
-    const x = px - w + random(px) * w * paddingX - addGap * 200;
+    const x = px - w + cm.randomLcg(px) * w * paddingX - addGap * 200;
     const y = Math.max(height / 2 + 10, (height / 8) * 5 + noiseDy(x) * offsetY);
     const h = noiseH(x + w / 2);
     px = x;
@@ -56,111 +53,83 @@ export function render({
   scaleX = 1,
   seed = 10000,
 } = {}) {
-  let mountains;
-  let plains;
-  let rect;
+  const state = cm.state({startX, endX, translateX, scaleX, currentX, offsetX: 0, x0: 0});
+  const rectRef = cm.ref();
 
-  update();
+  const drag = {
+    type: cm.drag,
+    onDragStart: ({x}) => ((state.x0 = x), maybeLoad()),
+    onDrag: ({x}) => (state.offsetX = state.x0 - x),
+    onDragEnd: ({x}) => ((state.offsetX = 0), (state.currentX += state.x0 - x)),
+  };
 
-  const svg = create("svg").attr("width", width).attr("height", height).attr("cursor", "grab");
-  const g = svg.append("g");
-  svg
-    .call(draw)
-    .call(createDragX())
-    .call(createZoom())
-    .call(() => setScale(scaleX, translateX));
+  const zoom = {
+    type: cm.zoom,
+    scaleExtent: [0.15, 1],
+    onZoom: ({transform}) => {
+      const {x, k} = transform;
+      state.scaleX = k;
+      state.translateX = x;
+      maybeLoad();
+    },
+  };
 
-  return svg.node();
-
-  function update() {
-    const common = {startX, endX, height, seed};
-    mountains = generate(common);
-    plains = generate({...common, offsetY: 0, minWidth: 1 / 2, maxWidth: 1.5, height: height / 2});
-  }
-
-  function setX(x) {
-    const h = height * scaleX;
-    svg.attr("viewBox", [x, 0, width, h]);
-  }
-
-  function setScale(scaleX, translateX) {
-    const h = height * scaleX;
-    svg.attr("height", h).attr("viewBox", [currentX, 0, width, h]);
-    g.attr("transform", `translate(${translateX}, 0) scale(${scaleX})`);
+  function maybeLoad() {
+    const {x: rx, width: rw} = rectRef.node().getBoundingClientRect();
+    if (-width < rx) state.startX -= width / state.scaleX;
+    if (rx + rw < width * 2) state.endX += width / state.scale;
   }
 
   function draw() {
-    g.html("");
-
-    rect = g
-      .append("rect")
-      .attr("x", startX)
-      .attr("width", endX - startX)
-      .attr("height", height)
-      .attr("fill", "#eee");
-
-    g.append("line")
-      .attr("x1", startX)
-      .attr("y1", height / 2)
-      .attr("x2", endX)
-      .attr("y2", height / 2)
-      .attr("stroke", "#000");
-
-    g.append("g")
-      .selectAll("path")
-      .data(mountains)
-      .join("path")
-      .attr("d", ({x, y, x1, y1, x2, y2}) => `M${x},${y}L${x1},${y1}L${x2},${y2}Z`)
-      .attr("fill", "#ccc")
-      .attr("stroke", "#000");
-
-    g.append("g")
-      .attr("transform", `translate(0, ${height - height / 4})`)
-      .selectAll("path")
-      .data(plains)
-      .join("path")
-      .attr("d", ({x, y, x1, y1, x2, y2}) => `M${x},${y}L${x1},${y1}L${x2},${y2}Z`)
-      .attr("fill", "#ccc")
-      .attr("stroke", "#000");
+    const {startX, endX, currentX, translateX} = state;
+    const common = {height, startX, endX, seed};
+    const mountains = generate(common);
+    const plains = generate({...common, offsetY: 0, minWidth: 1 / 2, maxWidth: 1.5, height: height / 2});
+    const scaledHeight = height * scaleX;
+    return cm.svg("svg", {
+      width,
+      height: scaledHeight,
+      viewBox: [currentX + offsetX, 0, width, h],
+      cursor: "grab",
+      decorators: [drag, zoom],
+      children: [
+        cm.svg("g", {
+          transform: `translate(${translateX}, 0) scale(${scaleX})`,
+          children: [
+            cm.svg("rect", {
+              ref: rectRef,
+              x: startX,
+              width: endX - startX,
+              height,
+              fill: "#eee",
+            }),
+            cm.svg("line", {
+              x1: startX,
+              y1: height / 2,
+              x2: endX,
+              y2: height / 2,
+              stroke: "#000",
+            }),
+            cm.svg("path", mountains, {
+              d: ({x, y, x1, y1, x2, y2}) => `M${x},${y}L${x1},${y1}L${x2},${y2}Z`,
+              fill: "#ccc",
+              stroke: "#000",
+            }),
+            cm.svg("g", {
+              transform: `translate(0, ${height - height / 4})`,
+              children: [
+                cm.svg("path", plains, {
+                  d: ({x, y, x1, y1, x2, y2}) => `M${x},${y}L${x1},${y1}L${x2},${y2}Z`,
+                  fill: "#ccc",
+                  stroke: "#000",
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    });
   }
 
-  function redraw() {
-    update();
-    draw();
-  }
-
-  function createDragX() {
-    let x0 = 0;
-    return drag()
-      .on("start", ({x}) => ((x0 = x), maybeLoad()))
-      .on("drag", ({x}) => setX(currentX + x0 - x))
-      .on("end", ({x}) => {
-        currentX += x0 - x;
-        setX(currentX);
-      });
-  }
-
-  function maybeLoad() {
-    const {x: rx, width: rw} = rect.node().getBoundingClientRect();
-    let needRedraw = false;
-    if (-width < rx) {
-      startX -= width / scaleX;
-      needRedraw = true;
-    }
-    if (rx + rw < width * 2) {
-      endX += width / scaleX;
-      needRedraw = true;
-    }
-    if (needRedraw) redraw();
-  }
-
-  function createZoom() {
-    return zoom()
-      .scaleExtent([0.15, 1])
-      .on("zoom", ({transform}) => {
-        const {x, k} = transform;
-        setScale((scaleX = k), (translateX = x));
-        maybeLoad();
-      });
-  }
+  return cm.app({draw}).render();
 }
