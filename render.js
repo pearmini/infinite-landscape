@@ -33,7 +33,7 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
     const gap = random(px);
     const addGap = gap < 0.18;
     const w = noiseW(px);
-    const x = px - w + cm.randomLcg(px) * w * paddingX - addGap * 200;
+    const x = px - w + random(px) * w * paddingX - addGap * 200;
     const y = Math.max(height / 2 + 10, (height / 8) * 5 + noiseDy(x) * offsetY);
     const h = noiseH(x + w / 2);
     px = x;
@@ -75,13 +75,14 @@ export function render({
   };
 
   function maybeLoad() {
-    const {x: rx, width: rw} = rectRef.node().getBoundingClientRect();
+    const rect = rectRef.current.nodes()[0];
+    const {x: rx, width: rw} = rect.getBoundingClientRect();
     if (-width < rx) state.startX -= width / state.scaleX;
-    if (rx + rw < width * 2) state.endX += width / state.scale;
+    if (rx + rw < width * 2) state.endX += width / state.scaleX;
   }
 
   function draw() {
-    const {startX, endX, currentX, translateX} = state;
+    const {startX, endX, currentX, translateX, offsetX, scaleX} = state;
     const common = {height, startX, endX, seed};
     const mountains = generate(common);
     const plains = generate({...common, offsetY: 0, minWidth: 1 / 2, maxWidth: 1.5, height: height / 2});
@@ -89,7 +90,7 @@ export function render({
     return cm.svg("svg", {
       width,
       height: scaledHeight,
-      viewBox: [currentX + offsetX, 0, width, h],
+      viewBox: [currentX + offsetX, 0, width, scaledHeight],
       cursor: "grab",
       decorators: [drag, zoom],
       children: [
