@@ -5,6 +5,21 @@ function random(seed) {
   return randomLcg(seed)();
 }
 
+function calculateGradientPoints(angle) {
+  const rad = (angle * Math.PI) / 180;
+  const cx = 0.5;
+  const cy = 0.5;
+  const dx = Math.cos(rad) * 0.5;
+  const dy = Math.sin(rad) * 0.5;
+
+  const x1 = (cx - dx) * 100;
+  const y1 = (cy - dy) * 100;
+  const x2 = (cx + dx) * 100;
+  const y2 = (cy + dy) * 100;
+
+  return {x1: `${x1}%`, y1: `${y1}%`, x2: `${x2}%`, y2: `${y2}%`};
+}
+
 function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 2, offsetY = 1, paddingX = 3 / 4}) {
   const w = (height / 6) * 10;
   const seedHeight = seed;
@@ -13,6 +28,9 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
   const noiseH = cm.randomNoise(0, (height / 8) * 5, {seed: seedHeight});
   const noiseW = cm.randomNoise(w * minWidth, w * maxWidth, {seed: seedWidth});
   const noiseDy = cm.randomNoise(-height / 5, height / 5, {seed: seedDy});
+  const noiseAngle = cm.randomNoise(0, 180, {seed: seedDy});
+  const noiseStop1 = cm.randomNoise(10, 30, {seed: seedDy});
+  const noiseStop2 = cm.randomNoise(80, 90, {seed: seedDy});
 
   const primitives = [];
 
@@ -21,11 +39,14 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
     const gap = random(px);
     const addGap = gap < 0.18;
     const w = noiseW(px);
+    const angle = noiseAngle(px);
     const x = px - random(px) * w * paddingX + addGap * 200;
     const y = Math.max(height / 2 + 10, (height / 8) * 5 + noiseDy(x) * offsetY);
     const h = noiseH(x + w / 2);
+    const stop1 = noiseStop1(px);
+    const stop2 = noiseStop2(px);
     px = x + w;
-    primitives.push({x: x, y: y, x1: x + w / 2, y1: y - h, x2: x + w, y2: y});
+    primitives.push({x, y, x1: x + w / 2, y1: y - h, x2: x + w, y2: y, angle, stop1, stop2});
   }
 
   px = 0;
@@ -33,14 +54,49 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
     const gap = random(px);
     const addGap = gap < 0.18;
     const w = noiseW(px);
+    const angle = noiseAngle(px);
     const x = px - w + random(px) * w * paddingX - addGap * 200;
     const y = Math.max(height / 2 + 10, (height / 8) * 5 + noiseDy(x) * offsetY);
     const h = noiseH(x + w / 2);
+    const stop1 = noiseStop1(px);
+    const stop2 = noiseStop2(px);
     px = x;
-    primitives.push({x: x, y: y, x1: x + w / 2, y1: y - h, x2: x + w, y2: y});
+    primitives.push({x, y, x1: x + w / 2, y1: y - h, x2: x + w, y2: y, angle, stop1, stop2});
   }
 
   return primitives.sort((a, b) => Math.max(a.y, a.y2) - Math.max(b.y, b.y2));
+}
+
+function gradientPath(data, {transform = "", key}) {
+  return [
+    cm.svg("defs", {
+      children: [
+        cm.svg("linearGradient", data, {
+          id: (_, i) => `${key}-gradient-${i}`,
+          x1: (d) => calculateGradientPoints(d.angle).x1,
+          y1: (d) => calculateGradientPoints(d.angle).y1,
+          x2: (d) => calculateGradientPoints(d.angle).x2,
+          y2: (d) => calculateGradientPoints(d.angle).y2,
+          children: [
+            () => cm.svg("stop", {offset: "0%", "stop-color": "#34619E"}),
+            (d) => cm.svg("stop", {offset: `${d.stop1}%`, "stop-color": "#34619E"}),
+            (d) => cm.svg("stop", {offset: `${d.stop2}%`, "stop-color": "#8DC181"}),
+            () => cm.svg("stop", {offset: "100%", "stop-color": "#ECCC75"}),
+          ],
+        }),
+      ],
+    }),
+    cm.svg("g", {
+      transform,
+      children: [
+        cm.svg("path", data, {
+          d: ({x, y, x1, y1, x2, y2}) => `M${x},${y}L${x1},${y1}L${x2},${y2}Z`,
+          fill: (_, i) => `url(#${key}-gradient-${i})`,
+          stroke: "#000",
+        }),
+      ],
+    }),
+  ];
 }
 
 export function render({
@@ -102,7 +158,14 @@ export function render({
               x: startX,
               width: endX - startX,
               height,
-              fill: "#eee",
+              fill: "#F8DC81",
+            }),
+            cm.svg("rect", {
+              x: startX,
+              y: height / 2,
+              width: endX - startX,
+              height: height / 2,
+              fill: "#ECCC75",
             }),
             cm.svg("line", {
               x1: startX,
@@ -111,21 +174,8 @@ export function render({
               y2: height / 2,
               stroke: "#000",
             }),
-            cm.svg("path", mountains, {
-              d: ({x, y, x1, y1, x2, y2}) => `M${x},${y}L${x1},${y1}L${x2},${y2}Z`,
-              fill: "#ccc",
-              stroke: "#000",
-            }),
-            cm.svg("g", {
-              transform: `translate(0, ${height - height / 4})`,
-              children: [
-                cm.svg("path", plains, {
-                  d: ({x, y, x1, y1, x2, y2}) => `M${x},${y}L${x1},${y1}L${x2},${y2}Z`,
-                  fill: "#ccc",
-                  stroke: "#000",
-                }),
-              ],
-            }),
+            gradientPath(mountains, {key: "mountains"}),
+            gradientPath(plains, {key: "plains", transform: `translate(0, ${height - height / 4})`}),
           ],
         }),
       ],
