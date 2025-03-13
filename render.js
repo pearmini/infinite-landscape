@@ -73,10 +73,7 @@ function gradientPath(data, {transform = "", key}) {
       children: [
         cm.svg("linearGradient", data, {
           id: (_, i) => `${key}-gradient-${i}`,
-          x1: (d) => calculateGradientPoints(d.angle).x1,
-          y1: (d) => calculateGradientPoints(d.angle).y1,
-          x2: (d) => calculateGradientPoints(d.angle).x2,
-          y2: (d) => calculateGradientPoints(d.angle).y2,
+          attrs: (d) => calculateGradientPoints(d.angle),
           children: [
             () => cm.svg("stop", {offset: "0%", stopColor: "#34619E"}),
             (d) => cm.svg("stop", {offset: `${d.stop1}%`, stopColor: "#34619E"}),
