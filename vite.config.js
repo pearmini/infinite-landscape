@@ -1,12 +1,12 @@
 import {defineConfig} from "vite";
 
 export default defineConfig({
-  server: {
-    watch: {
-      usePolling: true,
-    },
-  },
-  optimizeDeps: {
-    exclude: ["charmingjs"],
-  },
+  // server: {
+  //   watch: {
+  //     usePolling: true,
+  //   },
+  // },
+  // optimizeDeps: {
+  //   exclude: ["charmingjs"],
+  // },
 });

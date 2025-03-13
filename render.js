@@ -78,10 +78,10 @@ function gradientPath(data, {transform = "", key}) {
           x2: (d) => calculateGradientPoints(d.angle).x2,
           y2: (d) => calculateGradientPoints(d.angle).y2,
           children: [
-            () => cm.svg("stop", {offset: "0%", "stop-color": "#34619E"}),
-            (d) => cm.svg("stop", {offset: `${d.stop1}%`, "stop-color": "#34619E"}),
-            (d) => cm.svg("stop", {offset: `${d.stop2}%`, "stop-color": "#8DC181"}),
-            () => cm.svg("stop", {offset: "100%", "stop-color": "#ECCC75"}),
+            () => cm.svg("stop", {offset: "0%", stopColor: "#34619E"}),
+            (d) => cm.svg("stop", {offset: `${d.stop1}%`, stopColor: "#34619E"}),
+            (d) => cm.svg("stop", {offset: `${d.stop2}%`, stopColor: "#8DC181"}),
+            () => cm.svg("stop", {offset: "100%", stopColor: "#ECCC75"}),
           ],
         }),
       ],
@@ -153,26 +153,23 @@ export function render({
         cm.svg("g", {
           transform: `translate(${translateX}, 0) scale(${scaleX})`,
           children: [
+            cm.svg("linearGradient", {
+              id: "background",
+              x1: "50%",
+              y1: "0%",
+              x2: "50%",
+              y2: "100%",
+              children: [
+                cm.svg("stop", {offset: "0%", stopColor: "#F6D87B"}),
+                cm.svg("stop", {offset: "100%", stopColor: "#ECCC75"}),
+              ],
+            }),
             cm.svg("rect", {
               ref: rectRef,
               x: startX,
               width: endX - startX,
               height,
-              fill: "#F8DC81",
-            }),
-            cm.svg("rect", {
-              x: startX,
-              y: height / 2,
-              width: endX - startX,
-              height: height / 2,
-              fill: "#ECCC75",
-            }),
-            cm.svg("line", {
-              x1: startX,
-              y1: height / 2,
-              x2: endX,
-              y2: height / 2,
-              stroke: "#000",
+              fill: "url(#background)",
             }),
             gradientPath(mountains, {key: "mountains"}),
             gradientPath(plains, {key: "plains", transform: `translate(0, ${height - height / 4})`}),
