@@ -107,7 +107,6 @@ export function render({
   seed = 10000,
 } = {}) {
   const state = cm.state({startX, endX, translateX, scaleX, currentX, offsetX: 0, x0: 0});
-  const rectRef = cm.ref();
 
   const drag = {
     type: cm.drag,
@@ -128,7 +127,7 @@ export function render({
   };
 
   function maybeLoad() {
-    const rect = rectRef.current.nodes()[0];
+    const rect = document.getElementById("bg-rect");
     const {x: rx, width: rw} = rect.getBoundingClientRect();
     if (-width < rx) state.startX -= width / state.scaleX;
     if (rx + rw < width * 2) state.endX += width / state.scaleX;
@@ -162,7 +161,7 @@ export function render({
               ],
             }),
             cm.svg("rect", {
-              ref: rectRef,
+              id: "bg-rect",
               x: startX,
               width: endX - startX,
               height,
