@@ -73,10 +73,7 @@ function gradientPath(data, {transform = "", key}) {
       children: [
         cm.svg("linearGradient", data, {
           id: (_, i) => `${key}-gradient-${i}`,
-          x1: (d) => calculateGradientPoints(d.angle).x1,
-          y1: (d) => calculateGradientPoints(d.angle).y1,
-          x2: (d) => calculateGradientPoints(d.angle).x2,
-          y2: (d) => calculateGradientPoints(d.angle).y2,
+          attrs: (d) => calculateGradientPoints(d.angle),
           children: [
             () => cm.svg("stop", {offset: "0%", stopColor: "#34619E"}),
             (d) => cm.svg("stop", {offset: `${d.stop1}%`, stopColor: "#34619E"}),
@@ -110,7 +107,6 @@ export function render({
   seed = 10000,
 } = {}) {
   const state = cm.state({startX, endX, translateX, scaleX, currentX, offsetX: 0, x0: 0});
-  const rectRef = cm.ref();
 
   const drag = {
     type: cm.drag,
@@ -131,7 +127,7 @@ export function render({
   };
 
   function maybeLoad() {
-    const rect = rectRef.current.nodes()[0];
+    const rect = document.getElementById("bg-rect");
     const {x: rx, width: rw} = rect.getBoundingClientRect();
     if (-width < rx) state.startX -= width / state.scaleX;
     if (rx + rw < width * 2) state.endX += width / state.scaleX;
@@ -165,7 +161,7 @@ export function render({
               ],
             }),
             cm.svg("rect", {
-              ref: rectRef,
+              id: "bg-rect",
               x: startX,
               width: endX - startX,
               height,
