@@ -108,24 +108,6 @@ export function render({
 } = {}) {
   const state = cm.state({startX, endX, translateX, scaleX, currentX, offsetX: 0, x0: 0});
 
-  const drag = {
-    type: cm.drag,
-    onDragStart: ({x}) => ((state.x0 = x), maybeLoad()),
-    onDrag: ({x}) => (state.offsetX = state.x0 - x),
-    onDragEnd: ({x}) => ((state.offsetX = 0), (state.currentX += state.x0 - x)),
-  };
-
-  const zoom = {
-    type: cm.zoom,
-    scaleExtent: [0.15, 1],
-    onZoom: ({transform}) => {
-      const {x, k} = transform;
-      state.scaleX = k;
-      state.translateX = x;
-      maybeLoad();
-    },
-  };
-
   function maybeLoad() {
     const rect = document.getElementById("bg-rect");
     const {x: rx, width: rw} = rect.getBoundingClientRect();
@@ -144,7 +126,20 @@ export function render({
       height: scaledHeight,
       viewBox: [currentX + offsetX, 0, width, scaledHeight],
       cursor: "grab",
-      decorators: [drag, zoom],
+      zoom: {
+        scaleExtent: [0.15, 1],
+        onZoom: ({transform}) => {
+          const {x, k} = transform;
+          state.scaleX = k;
+          state.translateX = x;
+          maybeLoad();
+        },
+      },
+      drag: {
+        onDragStart: ({x}) => ((state.x0 = x), maybeLoad()),
+        onDrag: ({x}) => (state.offsetX = state.x0 - x),
+        onDragEnd: ({x}) => ((state.offsetX = 0), (state.currentX += state.x0 - x)),
+      },
       children: [
         cm.svg("g", {
           transform: `translate(${translateX}, 0) scale(${scaleX})`,
@@ -175,5 +170,5 @@ export function render({
     });
   }
 
-  return cm.app({draw}).render();
+  return cm.app({draw, use: {zoom: cm.zoom, drag: cm.drag}}).render();
 }

@@ -12,7 +12,7 @@
     "vite": "^5.4.14"
   },
   "dependencies": {
-    "charmingjs": "^0.0.14",
+    "charmingjs": "^0.0.15",
     "d3-drag": "^3.0.0",
     "d3-random": "^3.0.1",
     "d3-selection": "^3.0.0",
