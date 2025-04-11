@@ -5,21 +5,6 @@ function random(seed) {
   return randomLcg(seed)();
 }
 
-function calculateGradientPoints(angle) {
-  const rad = (angle * Math.PI) / 180;
-  const cx = 0.5;
-  const cy = 0.5;
-  const dx = Math.cos(rad) * 0.5;
-  const dy = Math.sin(rad) * 0.5;
-
-  const x1 = (cx - dx) * 100;
-  const y1 = (cy - dy) * 100;
-  const x2 = (cx + dx) * 100;
-  const y2 = (cy + dy) * 100;
-
-  return {x1: `${x1}%`, y1: `${y1}%`, x2: `${x2}%`, y2: `${y2}%`};
-}
-
 function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 2, offsetY = 1, paddingX = 3 / 4}) {
   const w = (height / 6) * 10;
   const seedHeight = seed;
@@ -67,33 +52,25 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
   return primitives.sort((a, b) => Math.max(a.y, a.y2) - Math.max(b.y, b.y2));
 }
 
-function gradientPath(data, {transform = "", key}) {
-  return [
-    cm.svg("defs", {
-      children: [
-        cm.svg("linearGradient", data, {
-          id: (_, i) => `${key}-gradient-${i}`,
-          attrs: (d) => calculateGradientPoints(d.angle),
-          children: [
-            () => cm.svg("stop", {offset: "0%", stopColor: "#34619E"}),
-            (d) => cm.svg("stop", {offset: `${d.stop1}%`, stopColor: "#34619E"}),
-            (d) => cm.svg("stop", {offset: `${d.stop2}%`, stopColor: "#8DC181"}),
-            () => cm.svg("stop", {offset: "100%", stopColor: "#ECCC75"}),
+function gradientPath(data, {transform = ""} = {}) {
+  return cm.svg("g", {
+    transform,
+    children: [
+      cm.svg("path", data, {
+        d: ({x, y, x1, y1, x2, y2}) => `M${x},${y}L${x1},${y1}L${x2},${y2}Z`,
+        stroke: "#000",
+        gradient: (d) => ({
+          angle: d.angle,
+          stops: [
+            {offset: "0%", color: "#34619E"},
+            {offset: `${d.stop1}%`, color: "#34619E"},
+            {offset: `${d.stop2}%`, color: "#8DC181"},
+            {offset: "100%", color: "#ECCC75"},
           ],
         }),
-      ],
-    }),
-    cm.svg("g", {
-      transform,
-      children: [
-        cm.svg("path", data, {
-          d: ({x, y, x1, y1, x2, y2}) => `M${x},${y}L${x1},${y1}L${x2},${y2}Z`,
-          fill: (_, i) => `url(#${key}-gradient-${i})`,
-          stroke: "#000",
-        }),
-      ],
-    }),
-  ];
+      }),
+    ],
+  });
 }
 
 export function render({
@@ -144,31 +121,26 @@ export function render({
         cm.svg("g", {
           transform: `translate(${translateX}, 0) scale(${scaleX})`,
           children: [
-            cm.svg("linearGradient", {
-              id: "background",
-              x1: "50%",
-              y1: "0%",
-              x2: "50%",
-              y2: "100%",
-              children: [
-                cm.svg("stop", {offset: "0%", stopColor: "#F6D87B"}),
-                cm.svg("stop", {offset: "100%", stopColor: "#ECCC75"}),
-              ],
-            }),
             cm.svg("rect", {
               id: "bg-rect",
               x: startX,
               width: endX - startX,
               height,
-              fill: "url(#background)",
+              gradient: {
+                angle: 90,
+                stops: [
+                  {offset: "0%", color: "#F6D87B"},
+                  {offset: "100%", color: "#ECCC75"},
+                ],
+              },
             }),
-            gradientPath(mountains, {key: "mountains"}),
-            gradientPath(plains, {key: "plains", transform: `translate(0, ${height - height / 4})`}),
+            gradientPath(mountains),
+            gradientPath(plains, {transform: `translate(0, ${height - height / 4})`}),
           ],
         }),
       ],
     });
   }
 
-  return cm.app({draw, use: {zoom: cm.zoom, drag: cm.drag}}).render();
+  return cm.app({draw, use: {zoom: cm.zoom, drag: cm.drag, gradient: cm.gradient}}).render();
 }
