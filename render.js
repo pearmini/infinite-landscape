@@ -98,11 +98,12 @@ export function render({
   const id = Math.random().toString(36).substring(2, 7);
   const zoom = d3.zoom();
 
-  setInterval(update, 20);
+  const timer = setInterval(update, 20);
 
   // throttle makes sure the bg-rect rerender before the next maybeLoad.
   const maybeLoad = throttle(() => {
     const rect = document.getElementById("bg-rect");
+    if (!rect) return;
     const {width} = state;
     const {x: rx, width: rw} = rect.getBoundingClientRect();
     const scaledWidth = width / state.scaleX;
@@ -112,21 +113,29 @@ export function render({
     if (rx + rw > width * 3) state.endX -= scaledWidth;
   });
 
+  window.addEventListener("beforeunload", () => {
+    clearInterval(timer);
+    const landscapes = JSON.parse(localStorage.getItem("landscapes") ?? "{}");
+
+    if (Object.keys(landscapes).length === 1) {
+      localStorage.removeItem("scaleX");
+      localStorage.removeItem("translateX");
+    }
+
+    delete landscapes[id];
+    landscapes[id] = undefined;
+    localStorage.setItem("landscapes", JSON.stringify(landscapes));
+  });
+
   function update() {
     const scaleX = +(localStorage.getItem("scaleX") ?? state.scaleX);
     const translateX = +(localStorage.getItem("translateX") ?? state.translateX);
     const landscapes = JSON.parse(localStorage.getItem("landscapes") ?? "{}");
 
-    for (const [key, value] of Object.entries(landscapes)) {
-      const {lastTime} = value;
-      if (lastTime < Date.now() - 200) delete landscapes[key];
-    }
-
     const landscape = landscapes[id] ?? {};
     landscapes[id] = landscape;
 
     Object.assign(landscape, {
-      lastTime: Date.now(),
       screenX: window.screenX,
       screenY: window.screenY,
       screenWidth: window.innerWidth,
@@ -143,8 +152,8 @@ export function render({
       if (next) cx += next.screenX - current.screenX;
     }
 
-    if (zoom && scaleX !== state.scaleX && translateX !== state.translateX) {
-      const svg = document.getElementById("landscape");
+    const svg = document.getElementById("landscape");
+    if (zoom && scaleX !== state.scaleX && translateX !== state.translateX && svg) {
       d3.select(svg).call(zoom.transform, d3.zoomIdentity.translate(translateX, 0).scale(scaleX));
     }
 
