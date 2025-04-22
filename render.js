@@ -1,4 +1,4 @@
-import {cm, d3} from "./namspaces.js";
+import {cm, d3} from "./namespaces.js";
 
 function random(seed) {
   return d3.randomLcg(seed)();
