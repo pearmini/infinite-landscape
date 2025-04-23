@@ -1,8 +1,17 @@
-import {randomLcg} from "d3-random";
-import {cm} from "./namspaces.js";
+import {cm, d3} from "./namespaces.js";
 
 function random(seed) {
-  return randomLcg(seed)();
+  return d3.randomLcg(seed)();
+}
+
+function throttle(callback, delay = 20) {
+  let lastCall = 0;
+  return function (...args) {
+    const now = Date.now();
+    if (now - lastCall < delay) return;
+    lastCall = now;
+    return callback(...args);
+  };
 }
 
 function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 2, offsetY = 1, paddingX = 3 / 4}) {
@@ -52,24 +61,26 @@ function generate({height, startX, endX, seed, minWidth = 1 / 8, maxWidth = 1 / 
   return primitives.sort((a, b) => Math.max(a.y, a.y2) - Math.max(b.y, b.y2));
 }
 
-function gradientPath(data, {transform = ""} = {}) {
+function Mountains({data, transform = "translate(0,0)"}) {
   return cm.svg("g", {
     transform,
+    stroke: "#000",
+    fill: "#ddd",
     children: [
       cm.svg("path", data, {
-        d: ({x, y, x1, y1, x2, y2}) => `M${x},${y}L${x1},${y1}L${x2},${y2}Z`,
-        stroke: "#000",
-        gradient: (d) => ({
-          angle: d.angle,
-          stops: [
-            {offset: "0%", color: "#34619E"},
-            {offset: `${d.stop1}%`, color: "#34619E"},
-            {offset: `${d.stop2}%`, color: "#8DC181"},
-            {offset: "100%", color: "#ECCC75"},
-          ],
-        }),
+        d: (d) => `M${d.x},${d.y}L${d.x1},${d.y1}L${d.x2},${d.y2}Z`,
       }),
     ],
+  });
+}
+
+function Background({x, width, height}) {
+  return cm.svg("rect", {
+    id: "bg-rect",
+    x,
+    width,
+    height,
+    fill: "#eee",
   });
 }
 
@@ -83,64 +94,125 @@ export function render({
   scaleX = 1,
   seed = 10000,
 } = {}) {
-  const state = cm.state({startX, endX, translateX, scaleX, currentX, offsetX: 0, x0: 0});
+  const state = cm.state({startX, endX, translateX, scaleX, currentX, width});
+  const id = Math.random().toString(36).substring(2, 7);
+  const zoom = d3.zoom();
 
-  function maybeLoad() {
+  const timer = setInterval(update, 20);
+
+  // throttle makes sure the bg-rect rerender before the next maybeLoad.
+  const maybeLoad = throttle(() => {
     const rect = document.getElementById("bg-rect");
+    if (!rect) return;
+    const {width} = state;
     const {x: rx, width: rw} = rect.getBoundingClientRect();
-    if (-width < rx) state.startX -= width / state.scaleX;
-    if (rx + rw < width * 2) state.endX += width / state.scaleX;
+    const scaledWidth = width / state.scaleX;
+    if (-width < rx) state.startX -= scaledWidth;
+    if (-width * 2 > rx) state.startX += scaledWidth;
+    if (rx + rw < width * 2) state.endX += scaledWidth;
+    if (rx + rw > width * 3) state.endX -= scaledWidth;
+  });
+
+  window.addEventListener("beforeunload", () => {
+    clearInterval(timer);
+    const landscapes = JSON.parse(localStorage.getItem("landscapes") ?? "{}");
+
+    if (Object.keys(landscapes).length === 1) {
+      localStorage.removeItem("scaleX");
+      localStorage.removeItem("translateX");
+    }
+
+    delete landscapes[id];
+    landscapes[id] = undefined;
+    localStorage.setItem("landscapes", JSON.stringify(landscapes));
+  });
+
+  function update() {
+    const scaleX = +(localStorage.getItem("scaleX") ?? state.scaleX);
+    const translateX = +(localStorage.getItem("translateX") ?? state.translateX);
+    const landscapes = JSON.parse(localStorage.getItem("landscapes") ?? "{}");
+
+    const landscape = landscapes[id] ?? {};
+    landscapes[id] = landscape;
+
+    Object.assign(landscape, {
+      screenX: window.screenX,
+      screenY: window.screenY,
+      screenWidth: window.innerWidth,
+      screenHeight: window.innerHeight,
+    });
+
+    const sorted = d3.sort(Object.values(landscapes), (d) => d.screenX);
+
+    let cx = 0;
+    for (let i = 0; i < sorted.length; i++) {
+      const current = sorted[i];
+      const next = sorted[i + 1];
+      current.currentX = cx;
+      if (next) cx += next.screenX - current.screenX;
+    }
+
+    const svg = document.getElementById("landscape");
+    if (zoom && scaleX !== state.scaleX && translateX !== state.translateX && svg) {
+      d3.select(svg).call(zoom.transform, d3.zoomIdentity.translate(translateX, 0).scale(scaleX));
+    }
+
+    state.currentX = landscape.currentX;
+    state.width = landscape.screenWidth;
+    state.scaleX = scaleX;
+    state.translateX = translateX;
+
+    localStorage.setItem("landscapes", JSON.stringify(landscapes));
+
+    maybeLoad();
   }
 
-  function draw() {
-    const {startX, endX, currentX, translateX, offsetX, scaleX} = state;
+  function Landscape() {
+    console.log("Rendering landscape");
+
+    const {startX, endX, currentX, translateX, scaleX, width} = state;
+    const scaledHeight = height * scaleX;
     const common = {height, startX, endX, seed};
+
+    const background = {x: startX, width: endX - startX, height};
     const mountains = generate(common);
     const plains = generate({...common, offsetY: 0, minWidth: 1 / 2, maxWidth: 1.5, height: height / 2});
-    const scaledHeight = height * scaleX;
+
     return cm.svg("svg", {
       width,
+      id: "landscape",
       height: scaledHeight,
-      viewBox: [currentX + offsetX, 0, width, scaledHeight],
+      viewBox: [currentX, 0, width, scaledHeight],
       cursor: "grab",
       zoom: {
+        instance: zoom,
         scaleExtent: [0.15, 1],
         onZoom: ({transform}) => {
           const {x, k} = transform;
           state.scaleX = k;
           state.translateX = x;
+          localStorage.setItem("scaleX", k);
+          localStorage.setItem("translateX", x);
           maybeLoad();
         },
-      },
-      drag: {
-        onDragStart: ({x}) => ((state.x0 = x), maybeLoad()),
-        onDrag: ({x}) => (state.offsetX = state.x0 - x),
-        onDragEnd: ({x}) => ((state.offsetX = 0), (state.currentX += state.x0 - x)),
       },
       children: [
         cm.svg("g", {
           transform: `translate(${translateX}, 0) scale(${scaleX})`,
           children: [
-            cm.svg("rect", {
-              id: "bg-rect",
-              x: startX,
-              width: endX - startX,
-              height,
-              gradient: {
-                angle: 90,
-                stops: [
-                  {offset: "0%", color: "#F6D87B"},
-                  {offset: "100%", color: "#ECCC75"},
-                ],
-              },
-            }),
-            gradientPath(mountains),
-            gradientPath(plains, {transform: `translate(0, ${height - height / 4})`}),
+            Background(background),
+            Mountains({data: mountains}),
+            Mountains({data: plains, transform: `translate(0, ${height - height / 4})`}),
           ],
         }),
       ],
     });
   }
 
-  return cm.app({draw, use: {zoom: cm.zoom, drag: cm.drag, gradient: cm.gradient}}).render();
+  const root = cm.html("div", {
+    children: Landscape,
+    use: {zoom: cm.zoom},
+  });
+
+  return root.render();
 }
