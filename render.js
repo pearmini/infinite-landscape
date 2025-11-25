@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import {randomNoise} from "./noise.js";
 import {applyGradient} from "./gradient.js";
+import {tree} from "./tree.js";
 
 function random(seed) {
   return d3.randomLcg(seed)();
@@ -140,6 +141,10 @@ export function render({
     });
 
   svg.call(dragBehavior);
+
+  const treeSvg = tree("Bairui SU", {padding: 0, number: false, line: false, end: false}).render();
+
+  transformGroup.append("g").append(() => treeSvg);
 
   // Initial render
   update();

@@ -8,9 +8,18 @@ importers:
 
   .:
     dependencies:
+      apackjs:
+        specifier: 0.0.1-beta.3
+        version: 0.0.1-beta.3
+      charmingjs:
+        specifier: 0.0.17
+        version: 0.0.17
       d3:
         specifier: ^7.9.0
         version: 7.9.0
+      gl-matrix:
+        specifier: ^3.4.4
+        version: 3.4.4
     devDependencies:
       vite:
         specifier: ^5.4.21
@@ -269,6 +278,15 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
+  apackjs@0.0.1-beta.3:
+    resolution: {integrity: sha512-P/7ORlIKOm8qA3SdkrG4PcmQr68uk7IBVg+gcWuS463/QY03wMypCORCE05pc3r0u+oeWRmhf1bwJYE6SzZpTg==}
+
+  charmingjs-vector@0.0.3:
+    resolution: {integrity: sha512-7nvY6XOgjErbj5M0hJzNCdjkFCF5JfWNp6wFyqVYPAGrK2hd78hr5GL8bHAUsZomH+eE9Co2AgBw24cwwQu+bg==}
+
+  charmingjs@0.0.17:
+    resolution: {integrity: sha512-GuLtn8bALADGX8I+JEZngdmizvLrESbj10ynriPlxrc/rE1wKIBsG1gFwVffFEtO3m1xJ9QQ8gxFN3OpA3Bg9w==}
+
   commander@7.2.0:
     resolution: {integrity: sha512-QrWXB+ZQSVPmIWIhtEO9H+gwHaMGYiF5ChvoJ+K9ZGHG/sVsa6yiesAD1GC/x46sET00Xlwo1u49RVVVzvcSkw==}
     engines: {node: '>= 10'}
@@ -412,6 +430,9 @@ packages:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+
+  gl-matrix@3.4.4:
+    resolution: {integrity: sha512-latSnyDNt/8zYUB6VIJ6PCh2jBjJX6gnDsoCZ7LyW7GkqrD51EWwa9qCoGixj8YqBtETQK/xY7OmpTF8xz1DdQ==}
 
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
@@ -621,6 +642,22 @@ snapshots:
 
   '@types/estree@1.0.8': {}
 
+  apackjs@0.0.1-beta.3:
+    dependencies:
+      charmingjs: 0.0.17
+      d3-array: 3.2.4
+      d3-hierarchy: 3.1.2
+      d3-random: 3.0.1
+      d3-scale: 4.0.2
+      d3-shape: 3.2.0
+
+  charmingjs-vector@0.0.3: {}
+
+  charmingjs@0.0.17:
+    dependencies:
+      charmingjs-vector: 0.0.3
+      d3-timer: 3.0.1
+
   commander@7.2.0: {}
 
   d3-array@3.2.4:
@@ -807,6 +844,8 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  gl-matrix@3.4.4: {}
 
   iconv-lite@0.6.3:
     dependencies:
