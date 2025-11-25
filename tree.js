@@ -106,6 +106,8 @@ function trimDegenerateSegments(code) {
 export function tree(
   text,
   {
+    width = 480,
+    height = width,
     stroke = "black",
     grid = false,
     padding = 20,
@@ -117,9 +119,6 @@ export function tree(
     strokeWidth = 1.5,
   } = {}
 ) {
-  const width = 480;
-  const height = 480;
-
   text = text.trim();
 
   const ascii = text

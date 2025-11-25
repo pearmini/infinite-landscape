@@ -3,6 +3,34 @@ import {randomNoise} from "./noise.js";
 import {applyGradient} from "./gradient.js";
 import {tree} from "./tree.js";
 
+const COLORS = {
+  background: (d) => ({
+    angle: 90,
+    stops: [
+      {offset: "0%", color: "#F6D87B"},
+      {offset: "100%", color: "#ECCC75"},
+    ],
+  }),
+  mountains: (d) => ({
+    angle: d.angle,
+    stops: [
+      {offset: "0%", color: "#51A9F1"},
+      {offset: `${d.stop1}%`, color: "#34619E"},
+      {offset: `${d.stop2}%`, color: "#8DC181"},
+      {offset: "100%", color: "#ECCC75"},
+    ],
+  }),
+  plains: (d) => ({
+    angle: d.angle,
+    stops: [
+      {offset: "0%", color: "#34619E"},
+      {offset: `${d.stop1}%`, color: "#34619E"},
+      {offset: `${d.stop2}%`, color: "#8DC181"},
+      {offset: "100%", color: "#ECCC75"},
+    ],
+  }),
+};
+
 function random(seed) {
   return d3.randomLcg(seed)();
 }
@@ -88,17 +116,7 @@ export function render({
     .attr("width", endX - startX)
     .attr("height", height)
     .each(function () {
-      applyGradient(
-        this,
-        {
-          angle: 90,
-          stops: [
-            {offset: "0%", color: "#F6D87B"},
-            {offset: "100%", color: "#ECCC75"},
-          ],
-        },
-        svg.node()
-      );
+      applyGradient(this, COLORS.background(), svg.node());
     });
 
   // Mountains group
@@ -188,19 +206,7 @@ export function render({
       .attr("d", (d) => `M${d.x},${d.y}L${d.x1},${d.y1}L${d.x2},${d.y2}Z`)
       .attr("stroke", "#000")
       .each(function (d) {
-        applyGradient(
-          this,
-          {
-            angle: d.angle,
-            stops: [
-              {offset: "0%", color: "#34619E"},
-              {offset: `${d.stop1}%`, color: "#34619E"},
-              {offset: `${d.stop2}%`, color: "#8DC181"},
-              {offset: "100%", color: "#ECCC75"},
-            ],
-          },
-          svg.node()
-        );
+        applyGradient(this, COLORS.mountains(d), svg.node());
       });
 
     mountainsPaths.exit().remove();
@@ -217,19 +223,7 @@ export function render({
       .attr("stroke", "#000")
       .attr("transform", `translate(0, ${height - height / 4})`)
       .each(function (d) {
-        applyGradient(
-          this,
-          {
-            angle: d.angle,
-            stops: [
-              {offset: "0%", color: "#34619E"},
-              {offset: `${d.stop1}%`, color: "#34619E"},
-              {offset: `${d.stop2}%`, color: "#8DC181"},
-              {offset: "100%", color: "#ECCC75"},
-            ],
-          },
-          svg.node()
-        );
+        applyGradient(this, COLORS.plains(d), svg.node());
       });
 
     plainsPaths.exit().remove();
