@@ -1,4 +1,4 @@
-import {svg} from "charmingjs";
+import * as d3 from "d3";
 
 function calculateGradientPoints(angle) {
   const rad = (angle * Math.PI) / 180;
@@ -33,36 +33,51 @@ function uid() {
   return Math.random().toString(36).substr(2, 9);
 }
 
-function createGradient(options) {
-  const id = uid();
+export function createGradient(options, svgRoot) {
+  const id = `gradient-${uid()}`;
   const {angle = 0, stops = []} = options;
-  return [
-    id,
-    svg("linearGradient", {
-      id,
-      ...calculateGradientPoints(angle),
-      children: stops.map(({offset, color}) => svg("stop", {offset, "stop-color": color})),
-    }).node(),
-  ];
+
+  const defs = d3.select(svgRoot).select("defs#gradient-defs");
+  if (defs.empty()) {
+    d3.select(svgRoot).append("defs").attr("id", "gradient-defs");
+  }
+
+  const linearGradient = d3.select(svgRoot)
+    .select("defs#gradient-defs")
+    .append("linearGradient")
+    .attr("id", id)
+    .attr("x1", calculateGradientPoints(angle).x1)
+    .attr("y1", calculateGradientPoints(angle).y1)
+    .attr("x2", calculateGradientPoints(angle).x2)
+    .attr("y2", calculateGradientPoints(angle).y2);
+
+  stops.forEach(({offset, color}) => {
+    linearGradient.append("stop").attr("offset", offset).attr("stop-color", color);
+  });
+
+  return id;
 }
 
-export function gradient(node, options, context) {
-  const container = context.root();
-  const root = container.querySelector("svg");
-  if (!root) return;
+export function applyGradient(node, options, svgRoot) {
+  if (!svgRoot) {
+    svgRoot = node.closest("svg");
+    if (!svgRoot) return;
+  }
+
   if (node.__gradient__) {
-    const {options: oldO, node: oldN} = node.__gradient__;
+    const {options: oldO, id: oldId} = node.__gradient__;
     if (equal(oldO, options)) return;
-    const [id, linerGradient] = createGradient(options);
-    node.setAttribute("fill", `url(#${id})`);
-    oldN.replaceWith(linerGradient);
-    node.__gradient__ = {node: linerGradient, options};
+
+    // Remove old gradient
+    d3.select(svgRoot).select(`#${oldId}`).remove();
+
+    // Create new gradient
+    const id = createGradient(options, svgRoot);
+    d3.select(node).attr("fill", `url(#${id})`);
+    node.__gradient__ = {id, options};
   } else {
-    let defs = root.querySelector("#cm-gradient-defs");
-    if (!defs) root.appendChild((defs = svg("defs", {id: "cm-gradient-defs"}).node()));
-    const [id, linerGradient] = createGradient(options);
-    defs.appendChild(linerGradient);
-    node.setAttribute("fill", `url(#${id})`);
-    node.__gradient__ = {node: linerGradient, options};
+    const id = createGradient(options, svgRoot);
+    d3.select(node).attr("fill", `url(#${id})`);
+    node.__gradient__ = {id, options};
   }
 }
