@@ -197,9 +197,21 @@ export function render({
 
   svg.call(dragBehavior);
 
-  const treeSvg = tree("Bairui SU", {padding: 0, number: false, line: false, end: false}).render();
+  const size = 300;
 
-  transformGroup.append("g").append(() => treeSvg);
+  const treeSvg = tree("Bairui SU", {
+    padding: 0,
+    number: false,
+    line: false,
+    end: false,
+    width: size,
+    strokeWidth: 1,
+  }).render();
+
+  transformGroup
+    .append("g")
+    .attr("transform", `translate(${0}, ${0})`)
+    .append(() => treeSvg);
 
   update();
 

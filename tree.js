@@ -153,7 +153,7 @@ export function tree(
   const paths = [];
   const circles = [];
   const numbers = [];
-  const initLen = 140;
+  const initLen = (140 / 480) * width;
   const baselineY = height * 0.618 + initLen;
   const context = cm.mat().translate(width / 2, baselineY);
   branch(root, initLen, 0, 80);
@@ -273,14 +273,14 @@ export function tree(
   } catch (e) {
     longMessage = true;
     textNode = cm.svg("text", {
-      textContent: ellipsis(text, 18),
+      textContent: ellipsis(text, 14),
       x: "100%",
       y: "100%",
-      dy: "-55",
-      dx: "-20",
+      dy: (-55 / 480) * width,
+      dx: (-20 / 480) * width,
       textAnchor: "end",
       fill: "black",
-      fontSize: 16,
+      fontSize: d3.scaleLinear().domain([200, 480]).range([14, 16]),
       fontFamily: "monospace",
     });
   }
@@ -354,7 +354,7 @@ export function tree(
             }),
           ],
         }),
-      stamp && (longMessage ? null : textNode),
+      stamp && textNode,
       count &&
         cm.svg("g", numbers, {
           transform: (d) => d.transform,
