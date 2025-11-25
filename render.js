@@ -8,6 +8,7 @@ const COLORS = {
     angle: 90,
     stops: [
       {offset: "0%", color: "#F6D87B"},
+      {offset: "70%", color: "#ECCC75"},
       {offset: "100%", color: "#ECCC75"},
     ],
   }),
@@ -66,9 +67,8 @@ function generate({
   const noiseH = randomNoise(0, (height / 8) * 5, {seed: seedHeight});
   const noiseW = randomNoise(width * minWidth, width * maxWidth, {seed: seedWidth});
   const noiseDy = randomNoise(-height, height, {seed: seedDy});
-  const noiseAngle = randomNoise(0, 180, {seed: seedDy});
   const noiseStop1 = randomNoise(10, 30, {seed: seedDy});
-  const noiseStop2 = randomNoise(80, 90, {seed: seedDy});
+  const noiseStop2 = randomNoise(70, 90, {seed: seedDy});
   const noiseDetail = randomNoise(0, height / 6, {seed: seedDetail, octaves: 6, falloff: 0.4});
   const noiseRoughness = randomNoise(0.2, 0.3, {seed: seedDetail, octaves: 6, falloff: 0.4});
   const noiseMidPoint = randomNoise(0, 1, {seed: seedDetail, octaves: 6, falloff: 0.4});
@@ -79,7 +79,6 @@ function generate({
   function generateMountain(px, direction) {
     const addGap = 0.5 < noiseGap(px);
     const w = noiseW(px);
-    const angle = noiseAngle(px);
     const x = px - random(px) * w * paddingX * direction + direction * addGap * 200 + w * Math.min(0, direction);
     const y = Math.max(0, height * 0.5 + noiseDy(x) * offsetY) + baselineY;
     const h = noiseH(x + w / 2);
@@ -98,7 +97,6 @@ function generate({
     const points = subdivideMountain(basePoints, 0, maxDepth, roughness, noiseDetail, noiseMidPoint);
     return {
       points,
-      angle,
       stop1,
       stop2,
       x,
