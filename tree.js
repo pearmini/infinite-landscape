@@ -4,6 +4,8 @@ import {cm} from "./cm.js";
 
 const BACKGROUND_COLOR = "#FEFAF1";
 
+const TREE_COLOR = "#EED586";
+
 function reduceDenominator(numerator, denominator) {
   const rec = (a, b) => (b ? rec(b, a % b) : a);
   return denominator / rec(numerator, denominator);
@@ -260,28 +262,49 @@ export function tree(
     }
 
     const start = end ? width - totalLength : width / 2 + padding;
+    const sw = 1.5;
     textNode = cm.svg("g", {
       transform: `translate(${start}, ${baselineY - cellSize - 5})`,
       children: [
         apack.text(text, {
           cellSize,
-          word: {strokeWidth: 1.5},
-          background: {fill: "red"},
+          word: {strokeWidth: sw, stroke: "red"},
+          background: {strokeWidth: sw * 2, stroke: "red"},
         }),
       ],
     });
   } catch (e) {
     longMessage = true;
-    textNode = cm.svg("text", {
-      textContent: ellipsis(text, 14),
-      x: "100%",
-      y: "100%",
-      dy: (-55 / 480) * width,
-      dx: (-20 / 480) * width,
-      textAnchor: "end",
-      fill: "black",
-      fontSize: d3.scaleLinear().domain([200, 480]).range([14, 16]),
-      fontFamily: "monospace",
+    const fontSize = 12;
+    const textPadding = 4;
+    const textContent = ellipsis(text, 14);
+    const textWidth = textContent.length * (fontSize * 0.6);
+    const textHeight = fontSize;
+    const dx = (-20 / 480) * width;
+    const dy = (-55 / 480) * width;
+    textNode = cm.svg("g", {
+      children: [
+        cm.svg("rect", {
+          x: width + dx - textWidth - textPadding,
+          y: height + dy - textHeight - textPadding,
+          width: textWidth + textPadding * 2,
+          height: textHeight + textPadding * 2,
+          fill: "none",
+          stroke: "red",
+          strokeWidth: 1.5,
+        }),
+        cm.svg("text", {
+          textContent: textContent,
+          x: "100%",
+          y: "100%",
+          dx: dx,
+          dy: dy,
+          textAnchor: "end",
+          fill: "red",
+          fontSize: fontSize,
+          fontFamily: "monospace",
+        }),
+      ],
     });
   }
 
@@ -339,7 +362,7 @@ export function tree(
             [
               cm.svg("path", {
                 d: circlePath(d.r),
-                fill: BACKGROUND_COLOR,
+                fill: TREE_COLOR,
                 stroke: "black",
               }),
             ].filter(Boolean),
@@ -349,7 +372,7 @@ export function tree(
           transform: (d) => d.transform,
           children: (d) => [
             rose(d.r, d.n, d.d, {
-              fill: BACKGROUND_COLOR,
+              fill: TREE_COLOR,
               stroke: "black",
             }),
           ],
