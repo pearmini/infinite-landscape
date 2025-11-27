@@ -1,20 +1,5 @@
 import * as d3 from "d3";
 
-function calculateGradientPoints(angle) {
-  const rad = (angle * Math.PI) / 180;
-  const cx = 0.5;
-  const cy = 0.5;
-  const dx = Math.cos(rad) * 0.5;
-  const dy = Math.sin(rad) * 0.5;
-
-  const x1 = (cx - dx) * 100;
-  const y1 = (cy - dy) * 100;
-  const x2 = (cx + dx) * 100;
-  const y2 = (cy + dy) * 100;
-
-  return {x1: `${x1}%`, y1: `${y1}%`, x2: `${x2}%`, y2: `${y2}%`};
-}
-
 function equal(a, b) {
   if (!a || !b) return false;
   if (a.angle !== b.angle) return false;
@@ -35,24 +20,26 @@ function uid() {
 
 export function createGradient(options, svgRoot) {
   const id = `gradient-${uid()}`;
-  const {angle = 0, stops = []} = options;
+  const {stops = []} = options;
 
   const defs = d3.select(svgRoot).select("defs#gradient-defs");
   if (defs.empty()) {
     d3.select(svgRoot).append("defs").attr("id", "gradient-defs");
   }
 
-  const linearGradient = d3.select(svgRoot)
+  const radialGradient = d3
+    .select(svgRoot)
     .select("defs#gradient-defs")
-    .append("linearGradient")
+    .append("radialGradient")
     .attr("id", id)
-    .attr("x1", calculateGradientPoints(angle).x1)
-    .attr("y1", calculateGradientPoints(angle).y1)
-    .attr("x2", calculateGradientPoints(angle).x2)
-    .attr("y2", calculateGradientPoints(angle).y2);
+    .attr("cx", "50%")
+    .attr("cy", "0%")
+    .attr("r", "100%")
+    .attr("fx", "50%")
+    .attr("fy", "0%");
 
   stops.forEach(({offset, color}) => {
-    linearGradient.append("stop").attr("offset", offset).attr("stop-color", color);
+    radialGradient.append("stop").attr("offset", offset).attr("stop-color", color);
   });
 
   return id;

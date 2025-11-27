@@ -1,4 +1,4 @@
-# Infinite Landscape: {Mountains, Trees}\*
+# {Mountains, Trees}\*
 
 ![preview](./img.png)
 
