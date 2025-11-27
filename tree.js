@@ -2,9 +2,7 @@ import * as d3 from "d3";
 import * as apack from "apackjs";
 import {cm} from "./cm.js";
 
-const BACKGROUND_COLOR = "#FEFAF1";
-
-const TREE_COLOR = "#EED586";
+const FILL_COLOR = "#EED586";
 
 function reduceDenominator(numerator, denominator) {
   const rec = (a, b) => (b ? rec(b, a % b) : a);
@@ -311,7 +309,6 @@ export function tree(
   const svg = cm.svg("svg", {
     width,
     height,
-    styleBackground: BACKGROUND_COLOR,
     children: [
       grid &&
         cm.svg("rect", {
@@ -337,7 +334,7 @@ export function tree(
             transform: `translate(0, ${-initLen * 0.618})`,
             children: [
               rose(12, 1, i + 2, {
-                fill: BACKGROUND_COLOR,
+                fill: FILL_COLOR,
                 stroke: "black",
               }),
             ],
@@ -362,7 +359,7 @@ export function tree(
             [
               cm.svg("path", {
                 d: circlePath(d.r),
-                fill: TREE_COLOR,
+                fill: FILL_COLOR,
                 stroke: "black",
               }),
             ].filter(Boolean),
@@ -372,7 +369,7 @@ export function tree(
           transform: (d) => d.transform,
           children: (d) => [
             rose(d.r, d.n, d.d, {
-              fill: TREE_COLOR,
+              fill: FILL_COLOR,
               stroke: "black",
             }),
           ],

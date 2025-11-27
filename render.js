@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import {randomNoise} from "./noise.js";
 import {applyGradient} from "./gradient.js";
 import {tree} from "./tree.js";
+import namesData from "./names.json";
 
 const COLORS = {
   background: (d) => ({
@@ -48,7 +49,7 @@ function subdivideMountain(points, depth, maxDepth, roughness, noiseDis, noiseMi
   return subdivideMountain(newPoints, depth + 1, maxDepth, roughness, noiseDis, noiseMid);
 }
 
-function generate({
+function generateMountains({
   height,
   startX,
   endX,
@@ -76,7 +77,7 @@ function generate({
 
   const primitives = [];
 
-  function generateMountain(px, direction) {
+  function mountain(px, direction) {
     const addGap = 0.5 < noiseGap(px);
     const w = noiseW(px);
     const x = px - random(px) * w * paddingX * direction + direction * addGap * 200 + w * Math.min(0, direction);
@@ -108,19 +109,90 @@ function generate({
 
   let px = 0;
   while (px < endX) {
-    const mountain = generateMountain(px, 1);
-    primitives.push(mountain);
-    px = mountain.x2;
+    const m = mountain(px, 1);
+    primitives.push(m);
+    px = m.x2;
   }
 
   px = 0;
   while (startX < px) {
-    const mountain = generateMountain(px, -1);
-    primitives.push(mountain);
-    px = mountain.x;
+    const m = mountain(px, -1);
+    primitives.push(m);
+    px = m.x;
   }
 
   return primitives.sort((a, b) => Math.max(a.y, a.y2) - Math.max(b.y, b.y2));
+}
+
+function findYOnMountain(x, mountains) {
+  // Find the mountain that contains this X coordinate.
+  for (const mountain of mountains) {
+    const minX = Math.min(mountain.x, mountain.x2);
+    const maxX = Math.max(mountain.x, mountain.x2);
+
+    if (x >= minX && x <= maxX) {
+      // Find the two points that bracket this X coordinate.
+      const points = mountain.points;
+      for (let i = 0; i < points.length - 1; i++) {
+        const p1 = points[i];
+        const p2 = points[i + 1];
+
+        const minPX = Math.min(p1.x, p2.x);
+        const maxPX = Math.max(p1.x, p2.x);
+
+        if (x >= minPX && x <= maxPX && Math.abs(p2.x - p1.x) > 0.001) {
+          // Linear interpolation between the two points.
+          const t = (x - p1.x) / (p2.x - p1.x);
+          const y = interpolate(p1.y, p2.y, t);
+          // Ensure Y is valid (not negative or NaN)
+          if (y >= 0 && !isNaN(y) && isFinite(y)) {
+            return y;
+          }
+        }
+      }
+      // If x is exactly at the edge, return the Y at that edge.
+      if (Math.abs(x - mountain.x) < 0.001) {
+        const y = mountain.y;
+        if (y >= 0 && !isNaN(y) && isFinite(y)) return y;
+      }
+      if (Math.abs(x - mountain.x2) < 0.001) {
+        const y = mountain.y2;
+        if (y >= 0 && !isNaN(y) && isFinite(y)) return y;
+      }
+    }
+  }
+  return null;
+}
+
+function generateTrees({startX, endX, seed, height, mountains}) {
+  const spacing = 350;
+  const trees = [];
+  const randomName = (x) => random(x * 1000) * namesData.length;
+  const noiseSpacing = randomNoise(0, 1.2, {seed, octaves: 1, falloff: 0.5});
+
+  const Y = mountains.flatMap((m) => m.points.map((p) => p.y));
+  const dy = 40;
+  const minY = d3.min(Y) + dy;
+  const maxY = d3.max(Y) + dy;
+  const scaleWidth = d3.scaleSqrt().domain([minY, maxY]).range([200, 400]);
+
+  function addTree(x) {
+    const px = x + spacing * noiseSpacing(x);
+    const y = findYOnMountain(px, mountains);
+    if (y !== null && y >= 0) {
+      const nameIndex = Math.floor(randomName(x));
+      const name = namesData[nameIndex].name;
+      const py = Math.min(height - 20, y + dy);
+      const treeWidth = scaleWidth(py);
+      trees.push({x: px, y: py, width: treeWidth, name, id: `tree-${Math.floor(px / 100)}-${nameIndex}`});
+    }
+  }
+
+  let px;
+  for (px = 0; px < endX; px += spacing) addTree(px);
+  for (px = -spacing; px > startX; px -= spacing) addTree(px);
+
+  return trees;
 }
 
 export function render({
@@ -197,21 +269,7 @@ export function render({
 
   svg.call(dragBehavior);
 
-  const size = 300;
-
-  const treeSvg = tree("Bairui SU", {
-    padding: 0,
-    number: false,
-    line: false,
-    end: false,
-    width: size,
-    strokeWidth: 1,
-  }).render();
-
-  transformGroup
-    .append("g")
-    .attr("transform", `translate(${0}, ${0})`)
-    .append(() => treeSvg);
+  const treesGroup = transformGroup.append("g").attr("class", "trees-group");
 
   update();
 
@@ -225,15 +283,15 @@ export function render({
 
   function update() {
     const {startX, endX, currentX, translateX, offsetX, scaleX} = state;
-    const farMountains = generate({
+    const farMountains = generateMountains({
       startX,
       endX,
       seed,
       height: height / 4,
-      baselineY: height * 0.618,
+      baselineY: height * 0.5,
     });
 
-    const closeMountains = generate({
+    const closeMountains = generateMountains({
       startX,
       endX,
       seed: seed * 1000,
@@ -245,6 +303,8 @@ export function render({
     });
 
     const mountains = [...farMountains, ...closeMountains];
+
+    const trees = generateTrees({startX, endX, seed, height, mountains: closeMountains});
 
     const scaledHeight = height * scaleX;
 
@@ -272,6 +332,35 @@ export function render({
       });
 
     mountainsPaths.exit().remove();
+
+    // Update trees
+    const treeGroups = treesGroup.selectAll("g.tree-group").data(trees, (d) => d.id);
+
+    treeGroups
+      .enter()
+      .append("g")
+      .attr("class", "tree-group")
+      .each(function (d) {
+        const treeSvg = tree(d.name, {
+          padding: 0,
+          number: false,
+          line: false,
+          end: false,
+          width: d.width,
+          strokeWidth: 1,
+        }).render();
+        d3.select(this).append(() => treeSvg);
+      })
+      .merge(treeGroups)
+      .attr("transform", (d) => {
+        // Tree baseline is at height * 0.618 + initLen within the SVG
+        // initLen = (140/480) * width, and height = width
+        // So baseline offset = width * 0.618 + width * 0.292 = width * 0.91
+        const offset = d.width * 0.91;
+        return `translate(${d.x - d.width / 2}, ${d.y - offset})`;
+      });
+
+    treeGroups.exit().remove();
   }
 
   return svg.node();

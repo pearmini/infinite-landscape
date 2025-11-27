@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       apackjs:
-        specifier: 0.0.1-beta.3
-        version: 0.0.1-beta.3
+        specifier: 0.0.1
+        version: 0.0.1
       charmingjs:
         specifier: 0.0.17
         version: 0.0.17
@@ -278,8 +278,8 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
-  apackjs@0.0.1-beta.3:
-    resolution: {integrity: sha512-P/7ORlIKOm8qA3SdkrG4PcmQr68uk7IBVg+gcWuS463/QY03wMypCORCE05pc3r0u+oeWRmhf1bwJYE6SzZpTg==}
+  apackjs@0.0.1:
+    resolution: {integrity: sha512-Z1k4kMS1KnoOGnkaQ0i/BB660tNDIoT6hbRQziFIH5n4s4b+vUYaq21wZQ0DMpwE37NybYy8LtdxUBgOBHuD7w==}
 
   charmingjs-vector@0.0.3:
     resolution: {integrity: sha512-7nvY6XOgjErbj5M0hJzNCdjkFCF5JfWNp6wFyqVYPAGrK2hd78hr5GL8bHAUsZomH+eE9Co2AgBw24cwwQu+bg==}
@@ -642,7 +642,7 @@ snapshots:
 
   '@types/estree@1.0.8': {}
 
-  apackjs@0.0.1-beta.3:
+  apackjs@0.0.1:
     dependencies:
       charmingjs: 0.0.17
       d3-array: 3.2.4
