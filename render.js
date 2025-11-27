@@ -3,23 +3,24 @@ import {randomNoise} from "./noise.js";
 import {applyGradient} from "./gradient.js";
 import {tree} from "./tree.js";
 import namesData from "./names.json";
+import {THEME} from "./theme.js";
 
 const COLORS = {
   background: (d) => ({
     angle: 90,
     stops: [
-      {offset: "0%", color: "#F6D87B"},
-      {offset: "70%", color: "#ECCC75"},
-      {offset: "100%", color: "#ECCC75"},
+      {offset: "0%", color: THEME.sky},
+      {offset: "30%", color: THEME.background},
+      {offset: "100%", color: THEME.background},
     ],
   }),
   mountains: (d) => ({
     angle: d.angle,
     stops: [
-      {offset: "0%", color: "#51A9F1"},
-      {offset: `${d.stop1}%`, color: "#34619E"},
-      {offset: `${d.stop2}%`, color: "#8DC181"},
-      {offset: "100%", color: "#ECCC75"},
+      {offset: "0%", color: THEME.mountain1},
+      {offset: `${d.stop1}%`, color: THEME.mountain2},
+      {offset: `${d.stop2}%`, color: THEME.mountain3},
+      {offset: "100%", color: THEME.background},
     ],
   }),
 };

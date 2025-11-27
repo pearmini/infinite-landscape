@@ -1,8 +1,7 @@
 import * as d3 from "d3";
 import * as apack from "apackjs";
 import {cm} from "./cm.js";
-
-const FILL_COLOR = "#EED586";
+import {THEME} from "./theme.js";
 
 function reduceDenominator(numerator, denominator) {
   const rec = (a, b) => (b ? rec(b, a % b) : a);
@@ -334,7 +333,7 @@ export function tree(
             transform: `translate(0, ${-initLen * 0.618})`,
             children: [
               rose(12, 1, i + 2, {
-                fill: FILL_COLOR,
+                fill: THEME.background,
                 stroke: "black",
               }),
             ],
@@ -359,7 +358,7 @@ export function tree(
             [
               cm.svg("path", {
                 d: circlePath(d.r),
-                fill: FILL_COLOR,
+                fill: THEME.background,
                 stroke: "black",
               }),
             ].filter(Boolean),
@@ -369,7 +368,7 @@ export function tree(
           transform: (d) => d.transform,
           children: (d) => [
             rose(d.r, d.n, d.d, {
-              fill: FILL_COLOR,
+              fill: THEME.background,
               stroke: "black",
             }),
           ],
