@@ -171,10 +171,11 @@ function generateTrees({startX, endX, seed, height, mountains}) {
   const randomName = (x) => random(x * 1000) * namesData.length;
   const noiseSpacing = randomNoise(0, 1.2, {seed, octaves: 1, falloff: 0.5});
 
-  const Y = mountains.flatMap((m) => m.points.map((p) => p.y));
   const dy = 40;
-  const minY = d3.min(Y) + dy;
-  const maxY = d3.max(Y) + dy;
+
+  // Fixed Y range for trees for consistent y position.
+  const minY = 420;
+  const maxY = 640;
   const scaleWidth = d3.scaleSqrt().domain([minY, maxY]).range([200, 400]);
 
   function addTree(x) {
