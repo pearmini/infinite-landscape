@@ -211,26 +211,28 @@ function generateTrees({startX, endX, seed, height, mountains, nameQueue = null}
     if (useNameQueue && nameIndex >= nameQueue.length) break; // All names used
     addTree(px);
   }
-  
+
   // If using nameQueue and still have names, continue beyond endX
   if (useNameQueue && nameIndex < nameQueue.length) {
     let extendedPx = px;
-    while (nameIndex < nameQueue.length && extendedPx < endX * 10) { // Safety limit
+    while (nameIndex < nameQueue.length && extendedPx < endX * 10) {
+      // Safety limit
       if (!addTree(extendedPx) && nameIndex >= nameQueue.length) break;
       extendedPx += spacing;
     }
   }
-  
+
   // Generate trees in negative direction
   for (px = -spacing; px > startX; px -= spacing) {
     if (useNameQueue && nameIndex >= nameQueue.length) break; // All names used
     addTree(px);
   }
-  
+
   // If using nameQueue and still have names, continue beyond startX
   if (useNameQueue && nameIndex < nameQueue.length) {
     let extendedPx = px;
-    while (nameIndex < nameQueue.length && extendedPx > startX * 10) { // Safety limit
+    while (nameIndex < nameQueue.length && extendedPx > startX * 10) {
+      // Safety limit
       if (!addTree(extendedPx) && nameIndex >= nameQueue.length) break;
       extendedPx -= spacing;
     }
@@ -347,9 +349,19 @@ export function render({
       baselineY: height - height / 10,
     });
 
-    const mountains = [...farMountains, ...closeMountains];
+    const mountains = [
+      ...farMountains.map((d) => ({...d, type: "far"})),
+      ...closeMountains.map((d) => ({...d, type: "close"})),
+    ];
 
-    const treesResult = generateTrees({startX, endX, seed, height, mountains: closeMountains, nameQueue: state.nameQueue});
+    const treesResult = generateTrees({
+      startX,
+      endX,
+      seed,
+      height,
+      mountains: closeMountains,
+      nameQueue: state.nameQueue,
+    });
     const trees = treesResult.trees;
     if (treesResult.remainingNames !== null) {
       state.nameQueue = treesResult.remainingNames;
@@ -373,6 +385,7 @@ export function render({
     mountainsPaths
       .enter()
       .append("path")
+      .attr("class", (d) => d.type)
       .merge(mountainsPaths)
       .attr("d", (d) => line(d.points))
       .attr("stroke", "#000")

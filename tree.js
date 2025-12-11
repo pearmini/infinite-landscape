@@ -262,6 +262,7 @@ export function tree(
     const sw = 1.5;
     textNode = cm.svg("g", {
       transform: `translate(${start}, ${baselineY - cellSize - 5})`,
+      class: "stamp-group",
       children: [
         apack.text(text, {
           cellSize,
@@ -280,6 +281,7 @@ export function tree(
     const dx = (-20 / 480) * width;
     const dy = (-55 / 480) * width;
     textNode = cm.svg("g", {
+      class: "stamp-group",
       children: [
         cm.svg("rect", {
           x: width + dx - textWidth - textPadding,
@@ -309,109 +311,114 @@ export function tree(
     width,
     height,
     children: [
-      grid &&
-        cm.svg("rect", {
-          x: 0,
-          y: 0,
-          class: "tree-bg",
-          width: width,
-          height: height,
-          stroke,
-          strokeWidth,
-          fill: "transparent",
-        }),
-      cm.svg("g", flowers, {
-        transform: (d, i) => `translate(${flowerX(i)}, ${baselineY})`,
-        children: (d, i) => [
-          cm.svg("path", {
-            d: `M0,0L0,${-initLen * 0.618}`,
-            stroke: "black",
-            strokeWidth,
-          }),
-          cm.svg("g", {
-            strokeWidth,
-            transform: `translate(0, ${-initLen * 0.618})`,
-            children: [
-              rose(12, 1, i + 2, {
-                fill: THEME.background,
+      cm.svg("g", {
+        class: "branch-group",
+        children: [
+          grid &&
+            cm.svg("rect", {
+              x: 0,
+              y: 0,
+              class: "tree-bg",
+              width: width,
+              height: height,
+              stroke,
+              strokeWidth,
+              fill: "transparent",
+            }),
+          cm.svg("g", flowers, {
+            transform: (d, i) => `translate(${flowerX(i)}, ${baselineY})`,
+            children: (d, i) => [
+              cm.svg("path", {
+                d: `M0,0L0,${-initLen * 0.618}`,
                 stroke: "black",
+                strokeWidth,
+              }),
+              cm.svg("g", {
+                strokeWidth,
+                transform: `translate(0, ${-initLen * 0.618})`,
+                children: [
+                  rose(12, 1, i + 2, {
+                    fill: THEME.background,
+                    stroke: "black",
+                  }),
+                ],
               }),
             ],
           }),
-        ],
-      }),
-      tree &&
-        cm.svg("g", {
-          stroke: "black",
-          strokeWidth,
-          children: [
-            cm.svg("path", paths, {
-              d: (d) => d.d,
-              transform: (d) => d.transform,
-            }),
-          ],
-        }),
-      tree &&
-        cm.svg("g", circles, {
-          transform: (d) => d.transform,
-          children: (d) =>
-            [
-              cm.svg("path", {
-                d: circlePath(d.r),
-                fill: THEME.background,
-                stroke: "black",
-              }),
-            ].filter(Boolean),
-        }),
-      tree &&
-        cm.svg("g", roses, {
-          transform: (d) => d.transform,
-          children: (d) => [
-            rose(d.r, d.n, d.d, {
-              fill: THEME.background,
+          tree &&
+            cm.svg("g", {
               stroke: "black",
+              strokeWidth,
+              children: [
+                cm.svg("path", paths, {
+                  d: (d) => d.d,
+                  transform: (d) => d.transform,
+                }),
+              ],
             }),
-          ],
-        }),
-      stamp && textNode,
-      count &&
-        cm.svg("g", numbers, {
-          transform: (d) => d.transform,
-          children: (d) => [
-            cm.svg("circle", {
-              cx: 0,
-              cy: 0,
-              r: 14,
-              fill: "black",
+          tree &&
+            cm.svg("g", circles, {
+              transform: (d) => d.transform,
+              children: (d) =>
+                [
+                  cm.svg("path", {
+                    d: circlePath(d.r),
+                    fill: THEME.background,
+                    stroke: "black",
+                  }),
+                ].filter(Boolean),
             }),
+          tree &&
+            cm.svg("g", roses, {
+              transform: (d) => d.transform,
+              children: (d) => [
+                rose(d.r, d.n, d.d, {
+                  fill: THEME.background,
+                  stroke: "black",
+                }),
+              ],
+            }),
+          count &&
+            cm.svg("g", numbers, {
+              transform: (d) => d.transform,
+              children: (d) => [
+                cm.svg("circle", {
+                  cx: 0,
+                  cy: 0,
+                  r: 14,
+                  fill: "black",
+                }),
+                cm.svg("text", {
+                  textContent: d.count,
+                  fill: "white",
+                  fontSize: 20,
+                  textAnchor: "middle",
+                  dy: "0.4em",
+                }),
+              ],
+            }),
+          line &&
+            cm.svg("path", {
+              d: `M${padding},${baselineY}L${width - padding},${baselineY}`,
+              stroke: "black",
+              strokeWidth,
+            }),
+          number &&
             cm.svg("text", {
-              textContent: d.count,
-              fill: "white",
-              fontSize: 20,
-              textAnchor: "middle",
-              dy: "0.4em",
+              id: "ascii",
+              textContent: ellipsis(ascii, 58),
+              x: "100%",
+              y: "100%",
+              dy: "-26",
+              dx: "-20",
+              textAnchor: "end",
+              fill: "black",
+              fontSize: 12,
+              fontFamily: "monospace",
             }),
-          ],
-        }),
-      line &&
-        cm.svg("path", {
-          d: `M${padding},${baselineY}L${width - padding},${baselineY}`,
-          stroke: "black",
-          strokeWidth,
-        }),
-      number &&
-        cm.svg("text", {
-          id: "ascii",
-          textContent: ellipsis(ascii, 58),
-          x: "100%",
-          y: "100%",
-          dy: "-26",
-          dx: "-20",
-          textAnchor: "end",
-          fill: "black",
-          fontSize: 12,
-          fontFamily: "monospace",
-        }),
+        ].filter(Boolean),
+      }),
+      stamp && textNode,
     ].filter(Boolean),
   });
 

@@ -30,6 +30,15 @@
       z-index: 100;
     }
 
+    .buttons-row {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      margin-top: 15px;
+    }
+
     .title {
       font-size: 16px;
       margin: 0 0 10px 0;
@@ -45,7 +54,6 @@
     }
 
     .download-btn {
-      margin-top: 15px;
       padding: 10px 20px;
       background: rgba(255, 255, 255, 0.9);
       border: 2px solid #000;
@@ -82,7 +90,13 @@
           >ITP Spring 2025</a
         >.
       </p>
-      <button id="download-btn" class="download-btn">Download Landscape</button>
+      <div class="buttons-row">
+        <button id="download-btn" class="download-btn">Download Landscape</button>
+        <button id="riso-export-btn" class="download-btn">Export Riso Layers (3)</button>
+        <button id="riso-debug-btn" class="download-btn">Debug Riso 3 (Page 1)</button>
+        <button id="riso-export-4-btn" class="download-btn">Export Riso Layers (4)</button>
+        <button id="riso-debug-4-btn" class="download-btn">Debug Riso 4 (Page 1)</button>
+      </div>
     </div>
     <div id="container"></div>
     <script type="module" src="/main.js"></script>
