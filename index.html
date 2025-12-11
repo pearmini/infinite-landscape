@@ -43,6 +43,32 @@
     .content a {
       color: inherit;
     }
+
+    .download-btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #000;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .download-btn:hover {
+      background: rgba(255, 255, 255, 1);
+      transform: scale(1.05);
+    }
+
+    .download-btn:active {
+      transform: scale(0.98);
+    }
+
+    .download-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
   <body>
     <div class="content">
@@ -56,6 +82,7 @@
           >ITP Spring 2025</a
         >.
       </p>
+      <button id="download-btn" class="download-btn">Download Landscape</button>
     </div>
     <div id="container"></div>
     <script type="module" src="/main.js"></script>

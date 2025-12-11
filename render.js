@@ -165,7 +165,7 @@ function findYOnMountain(x, mountains) {
   return null;
 }
 
-function generateTrees({startX, endX, seed, height, mountains}) {
+function generateTrees({startX, endX, seed, height, mountains, nameQueue = null}) {
   const spacing = 350;
   const trees = [];
   const randomName = (x) => random(x * 1000) * namesData.length;
@@ -178,23 +178,65 @@ function generateTrees({startX, endX, seed, height, mountains}) {
   const maxY = 640;
   const scaleWidth = d3.scaleSqrt().domain([minY, maxY]).range([200, 400]);
 
+  // If nameQueue is provided, use it to assign names sequentially
+  let nameIndex = 0;
+  const useNameQueue = nameQueue && nameQueue.length > 0;
+
   function addTree(x) {
     const px = x + spacing * noiseSpacing(x);
     const y = findYOnMountain(px, mountains);
     if (y !== null && y >= 0) {
-      const nameIndex = Math.floor(randomName(x));
-      const name = namesData[nameIndex].name;
+      let name;
+      if (useNameQueue && nameIndex < nameQueue.length) {
+        name = nameQueue[nameIndex];
+        nameIndex++;
+      } else if (useNameQueue) {
+        // All names used, skip this tree
+        return false; // Return false to indicate we're done
+      } else {
+        const idx = Math.floor(randomName(x));
+        name = namesData[idx].name;
+      }
       const py = Math.min(height - 20, y + dy);
       const treeWidth = scaleWidth(py);
       trees.push({x: px, y: py, width: treeWidth, name, id: `tree-${Math.floor(px / 100)}-${nameIndex}`});
+      return true;
     }
+    return true; // Continue even if tree wasn't placed (no valid mountain position)
   }
 
   let px;
-  for (px = 0; px < endX; px += spacing) addTree(px);
-  for (px = -spacing; px > startX; px -= spacing) addTree(px);
+  // Generate trees in positive direction
+  for (px = 0; px < endX; px += spacing) {
+    if (useNameQueue && nameIndex >= nameQueue.length) break; // All names used
+    addTree(px);
+  }
+  
+  // If using nameQueue and still have names, continue beyond endX
+  if (useNameQueue && nameIndex < nameQueue.length) {
+    let extendedPx = px;
+    while (nameIndex < nameQueue.length && extendedPx < endX * 10) { // Safety limit
+      if (!addTree(extendedPx) && nameIndex >= nameQueue.length) break;
+      extendedPx += spacing;
+    }
+  }
+  
+  // Generate trees in negative direction
+  for (px = -spacing; px > startX; px -= spacing) {
+    if (useNameQueue && nameIndex >= nameQueue.length) break; // All names used
+    addTree(px);
+  }
+  
+  // If using nameQueue and still have names, continue beyond startX
+  if (useNameQueue && nameIndex < nameQueue.length) {
+    let extendedPx = px;
+    while (nameIndex < nameQueue.length && extendedPx > startX * 10) { // Safety limit
+      if (!addTree(extendedPx) && nameIndex >= nameQueue.length) break;
+      extendedPx -= spacing;
+    }
+  }
 
-  return trees;
+  return {trees, remainingNames: useNameQueue ? nameQueue.slice(nameIndex) : null};
 }
 
 export function render({
@@ -206,8 +248,9 @@ export function render({
   translateX = 0,
   scaleX = 1,
   seed = 10000,
+  nameQueue = null,
 } = {}) {
-  const state = {startX, endX, translateX, scaleX, currentX, offsetX: 0, x0: 0};
+  const state = {startX, endX, translateX, scaleX, currentX, offsetX: 0, x0: 0, nameQueue: nameQueue};
 
   const line = d3
     .line()
@@ -306,7 +349,11 @@ export function render({
 
     const mountains = [...farMountains, ...closeMountains];
 
-    const trees = generateTrees({startX, endX, seed, height, mountains: closeMountains});
+    const treesResult = generateTrees({startX, endX, seed, height, mountains: closeMountains, nameQueue: state.nameQueue});
+    const trees = treesResult.trees;
+    if (treesResult.remainingNames !== null) {
+      state.nameQueue = treesResult.remainingNames;
+    }
 
     const scaledHeight = height * scaleX;
 
