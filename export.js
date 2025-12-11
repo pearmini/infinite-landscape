@@ -229,36 +229,54 @@ export async function exportLandscapeToZip({seed = 10000, height = 600} = {}) {
       lastTreeEndX = lastTree.right;
     }
 
-    // Calculate how many pages we need to cover all trees
-    // Add some padding after the last tree for the final page
+    // Calculate the actual content width (from first page start to last tree end)
     const paddingAfterLastTree = pageWidth * 0.3; // 30% of page width as padding
     const contentEndX = lastTreeEndX + paddingAfterLastTree;
-    const contentWidth = contentEndX - firstPageStartX;
-    const numPages = Math.max(1, Math.ceil(contentWidth / pageWidth));
+    const actualContentWidth = contentEndX - firstPageStartX;
 
-    // All pages will be exactly pageWidth wide (including the last one)
-    // We stop generating pages after covering all trees
+    // Target: exactly 24 pages
+    const targetNumPages = 24;
+    const targetTotalWidth = targetNumPages * pageWidth;
 
-    loadingDiv.innerHTML = `<div>Exporting ${numPages} pages...</div>`;
+    // Leave blank space at the bottom - use 80% of page height for landscape
+    const landscapeHeight = pageHeight * 0.8;
+
+    // Calculate scale factors
+    // Scale to fit width in 24 pages
+    const scaleX = actualContentWidth / targetTotalWidth;
+    // Scale to fit height in 80% of page height
+    const scaleY = height / landscapeHeight;
+
+    // Use the larger scale (zoom out more) to ensure both width and height fit
+    const finalScale = Math.max(scaleX, scaleY);
+
+    // Calculate viewBox dimensions per page
+    // Each page shows: pageWidth * finalScale of the original content
+    const viewBoxWidthPerPage = pageWidth * finalScale;
+    const viewBoxHeightPerPage = pageHeight * finalScale;
+
+    loadingDiv.innerHTML = `<div>Exporting ${targetNumPages} pages (scaled to fit)...</div>`;
 
     // Create zip file
     const zip = new JSZip();
 
-    // Export each page (all same size)
-    for (let i = 0; i < numPages; i++) {
-      loadingDiv.innerHTML = `<div>Exporting page ${i + 1} of ${numPages}...</div>`;
+    // Export each page (all same size, exactly 24 pages)
+    for (let i = 0; i < targetNumPages; i++) {
+      loadingDiv.innerHTML = `<div>Exporting page ${i + 1} of ${targetNumPages}...</div>`;
 
-      const pageX = firstPageStartX + i * pageWidth;
-      const pageEndX = pageX + pageWidth;
+      // Calculate the viewBox in the original coordinate space
+      const viewBoxStartX = firstPageStartX + i * viewBoxWidthPerPage;
+      const viewBoxWidth = viewBoxWidthPerPage;
+      const viewBoxHeightToUse = viewBoxHeightPerPage;
 
       // Create a new SVG for this page by cloning and adjusting viewBox
       const pageSvg = fullSvg.cloneNode(true);
       const pageSvgElement = d3.select(pageSvg);
 
-      // Set viewBox for this page (all pages same size)
-      // The viewBox defines the coordinate space, width/height will be set in svgToPng for high DPI
+      // Set viewBox to show the scaled portion of the landscape
+      // The viewBox shows more content per page (zoomed out), and height is scaled to leave blank at bottom
       pageSvgElement
-        .attr("viewBox", `${pageX} 0 ${pageWidth} ${pageHeight}`)
+        .attr("viewBox", `${viewBoxStartX} 0 ${viewBoxWidth} ${viewBoxHeightToUse}`)
         .attr("width", pageWidth)
         .attr("height", pageHeight);
 
@@ -266,6 +284,7 @@ export async function exportLandscapeToZip({seed = 10000, height = 600} = {}) {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Convert to PNG (this will handle 2x scaling for high DPI)
+      // The page will have blank space at the bottom automatically since viewBox height < pageHeight
       const pngBlob = await svgToPng(pageSvg, pageWidth, pageHeight);
 
       // Add to zip
@@ -295,7 +314,7 @@ export async function exportLandscapeToZip({seed = 10000, height = 600} = {}) {
       }
     }, 2000);
 
-    return {success: true, numPages};
+    return {success: true, numPages: targetNumPages};
   } catch (error) {
     console.error("Export error:", error);
     const errorDiv = document.querySelector("#export-loading");
