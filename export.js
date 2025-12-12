@@ -206,7 +206,7 @@ export async function exportLandscapeToZip({seed = 10000, height = 600} = {}) {
 
     // Calculate pages with 17:11 aspect ratio
     const pageHeight = height;
-    const pageWidth = pageHeight * (17 / 11);
+    const pageWidth = pageHeight * (11 / 8);
 
     // Find the second tree position for the first page start
     let firstPageStartX = minX;
@@ -234,40 +234,41 @@ export async function exportLandscapeToZip({seed = 10000, height = 600} = {}) {
     const contentEndX = lastTreeEndX + paddingAfterLastTree;
     const actualContentWidth = contentEndX - firstPageStartX;
 
-    // Target: exactly 24 pages
-    const targetNumPages = 24;
-    const targetTotalWidth = targetNumPages * pageWidth;
+    // Target: exactly 60 pages, all containing trees
+    const targetNumPages = 60;
+
+    // Calculate viewBox width per page to fit all content in exactly 60 pages
+    // This ensures all 60 pages will have trees
+    const viewBoxWidthPerPage = actualContentWidth / targetNumPages;
 
     // Leave blank space at the bottom - use 80% of page height for landscape
     const landscapeHeight = pageHeight * 0.8;
 
-    // Calculate scale factors
-    // Scale to fit width in 24 pages
-    const scaleX = actualContentWidth / targetTotalWidth;
-    // Scale to fit height in 80% of page height
-    const scaleY = height / landscapeHeight;
+    // Calculate the aspect ratio: how much width per unit of height
+    const widthToHeightRatio = actualContentWidth / height;
 
-    // Use the larger scale (zoom out more) to ensure both width and height fit
-    const finalScale = Math.max(scaleX, scaleY);
+    // Calculate viewBox height to maintain aspect ratio with the new width per page
+    const viewBoxHeightPerPage = viewBoxWidthPerPage / widthToHeightRatio;
 
-    // Calculate viewBox dimensions per page
-    // Each page shows: pageWidth * finalScale of the original content
-    const viewBoxWidthPerPage = pageWidth * finalScale;
-    const viewBoxHeightPerPage = pageHeight * finalScale;
+    // Scale to fit the height in the available landscape height (80% of page)
+    // If the calculated height is larger than landscapeHeight, scale it down
+    const heightScale = Math.min(1, landscapeHeight / viewBoxHeightPerPage);
+    const finalViewBoxHeightPerPage = viewBoxHeightPerPage * heightScale;
+    const finalViewBoxWidthPerPage = viewBoxWidthPerPage * heightScale;
 
     loadingDiv.innerHTML = `<div>Exporting ${targetNumPages} pages (scaled to fit)...</div>`;
 
     // Create zip file
     const zip = new JSZip();
 
-    // Export each page (all same size, exactly 24 pages)
+    // Export each page (all same size, exactly 60 pages)
     for (let i = 0; i < targetNumPages; i++) {
       loadingDiv.innerHTML = `<div>Exporting page ${i + 1} of ${targetNumPages}...</div>`;
 
       // Calculate the viewBox in the original coordinate space
-      const viewBoxStartX = firstPageStartX + i * viewBoxWidthPerPage;
-      const viewBoxWidth = viewBoxWidthPerPage;
-      const viewBoxHeightToUse = viewBoxHeightPerPage;
+      const viewBoxStartX = firstPageStartX + i * finalViewBoxWidthPerPage;
+      const viewBoxWidth = finalViewBoxWidthPerPage;
+      const viewBoxHeightToUse = Math.max(finalViewBoxHeightPerPage, height); // Ensure full height is covered
 
       // Create a new SVG for this page by cloning and adjusting viewBox
       const pageSvg = fullSvg.cloneNode(true);
@@ -275,10 +276,12 @@ export async function exportLandscapeToZip({seed = 10000, height = 600} = {}) {
 
       // Set viewBox to show the scaled portion of the landscape
       // The viewBox shows more content per page (zoomed out), and height is scaled to leave blank at bottom
+      // preserveAspectRatio="xMidYMin slice" ensures content aligns to the top
       pageSvgElement
         .attr("viewBox", `${viewBoxStartX} 0 ${viewBoxWidth} ${viewBoxHeightToUse}`)
         .attr("width", pageWidth)
-        .attr("height", pageHeight);
+        .attr("height", pageHeight)
+        .attr("preserveAspectRatio", "xMidYMin meet");
 
       // Wait a moment for viewBox to apply
       await new Promise((resolve) => setTimeout(resolve, 100));

@@ -255,7 +255,7 @@ export async function exportRisoLayers({seed = 10000, height = 600, debug = fals
     `;
     document.body.appendChild(tempContainer);
 
-    const nameQueue = [...allNames].reverse();
+    const nameQueue = [...allNames];
     const fullSvg = render({
       width: estimatedWidth,
       height: height,
@@ -306,7 +306,7 @@ export async function exportRisoLayers({seed = 10000, height = 600, debug = fals
     }
 
     const pageHeight = height;
-    const pageWidth = pageHeight * (17 / 11);
+    const pageWidth = pageHeight * (11 / 8);
 
     let firstPageStartX = minX;
     if (treePositions.length >= 2) {
@@ -325,16 +325,24 @@ export async function exportRisoLayers({seed = 10000, height = 600, debug = fals
     const contentEndX = lastTreeEndX + paddingAfterLastTree;
     const actualContentWidth = contentEndX - firstPageStartX;
 
-    const targetNumPages = 24;
-    const targetTotalWidth = targetNumPages * pageWidth;
+    const targetNumPages = 60;
+    
+    // Calculate viewBox width per page to fit all content in exactly 60 pages
+    // This ensures all 60 pages will have trees
+    const viewBoxWidthPerPage = actualContentWidth / targetNumPages;
+    
     const landscapeHeight = pageHeight * 0.8;
-
-    const scaleX = actualContentWidth / targetTotalWidth;
-    const scaleY = height / landscapeHeight;
-    const finalScale = Math.max(scaleX, scaleY);
-
-    const viewBoxWidthPerPage = pageWidth * finalScale;
-    const viewBoxHeightPerPage = pageHeight * finalScale;
+    
+    // Calculate the aspect ratio: how much width per unit of height
+    const widthToHeightRatio = actualContentWidth / height;
+    
+    // Calculate viewBox height to maintain aspect ratio with the new width per page
+    const viewBoxHeightPerPage = viewBoxWidthPerPage / widthToHeightRatio;
+    
+    // Scale to fit the height in the available landscape height (80% of page)
+    const heightScale = Math.min(1, landscapeHeight / viewBoxHeightPerPage);
+    const finalViewBoxHeightPerPage = viewBoxHeightPerPage * heightScale;
+    const finalViewBoxWidthPerPage = viewBoxWidthPerPage * heightScale;
 
     const numPages = debug ? 1 : targetNumPages;
 
@@ -349,9 +357,9 @@ export async function exportRisoLayers({seed = 10000, height = 600, debug = fals
     for (let i = 0; i < numPages; i++) {
       loadingDiv.innerHTML = `<div>Processing page ${i + 1} of ${numPages}...</div>`;
 
-      const pageX = firstPageStartX + i * viewBoxWidthPerPage;
-      const viewBoxWidth = viewBoxWidthPerPage;
-      const viewBoxHeight = viewBoxHeightPerPage;
+      const pageX = firstPageStartX + i * finalViewBoxWidthPerPage;
+      const viewBoxWidth = finalViewBoxWidthPerPage;
+      const viewBoxHeight = Math.max(finalViewBoxHeightPerPage, height); // Ensure full height is covered
 
       // 1. Extract mountains layer (mountains with outlines)
       const mountainsSvg = extractMountainsLayer(fullSvg);
@@ -359,7 +367,8 @@ export async function exportRisoLayers({seed = 10000, height = 600, debug = fals
       mountainsSvgElement
         .attr("viewBox", `${pageX} 0 ${viewBoxWidth} ${viewBoxHeight}`)
         .attr("width", pageWidth)
-        .attr("height", pageHeight);
+        .attr("height", pageHeight)
+        .attr("preserveAspectRatio", "xMidYMin meet");
 
       await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -375,7 +384,8 @@ export async function exportRisoLayers({seed = 10000, height = 600, debug = fals
       treesSvgElement
         .attr("viewBox", `${pageX} 0 ${viewBoxWidth} ${viewBoxHeight}`)
         .attr("width", pageWidth)
-        .attr("height", pageHeight);
+        .attr("height", pageHeight)
+        .attr("preserveAspectRatio", "xMidYMin meet");
 
       await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -476,7 +486,7 @@ export async function exportRisoLayers4({seed = 10000, height = 600, debug = fal
     `;
     document.body.appendChild(tempContainer);
 
-    const nameQueue = [...allNames].reverse();
+    const nameQueue = [...allNames];
     const fullSvg = render({
       width: estimatedWidth,
       height: height,
@@ -527,7 +537,7 @@ export async function exportRisoLayers4({seed = 10000, height = 600, debug = fal
     }
 
     const pageHeight = height;
-    const pageWidth = pageHeight * (17 / 11);
+    const pageWidth = pageHeight * (11 / 8);
 
     let firstPageStartX = minX;
     if (treePositions.length >= 2) {
@@ -546,16 +556,24 @@ export async function exportRisoLayers4({seed = 10000, height = 600, debug = fal
     const contentEndX = lastTreeEndX + paddingAfterLastTree;
     const actualContentWidth = contentEndX - firstPageStartX;
 
-    const targetNumPages = 24;
-    const targetTotalWidth = targetNumPages * pageWidth;
+    const targetNumPages = 60;
+    
+    // Calculate viewBox width per page to fit all content in exactly 60 pages
+    // This ensures all 60 pages will have trees
+    const viewBoxWidthPerPage = actualContentWidth / targetNumPages;
+    
     const landscapeHeight = pageHeight * 0.8;
-
-    const scaleX = actualContentWidth / targetTotalWidth;
-    const scaleY = height / landscapeHeight;
-    const finalScale = Math.max(scaleX, scaleY);
-
-    const viewBoxWidthPerPage = pageWidth * finalScale;
-    const viewBoxHeightPerPage = pageHeight * finalScale;
+    
+    // Calculate the aspect ratio: how much width per unit of height
+    const widthToHeightRatio = actualContentWidth / height;
+    
+    // Calculate viewBox height to maintain aspect ratio with the new width per page
+    const viewBoxHeightPerPage = viewBoxWidthPerPage / widthToHeightRatio;
+    
+    // Scale to fit the height in the available landscape height (80% of page)
+    const heightScale = Math.min(1, landscapeHeight / viewBoxHeightPerPage);
+    const finalViewBoxHeightPerPage = viewBoxHeightPerPage * heightScale;
+    const finalViewBoxWidthPerPage = viewBoxWidthPerPage * heightScale;
 
     const numPages = debug ? 1 : targetNumPages;
 
@@ -571,9 +589,9 @@ export async function exportRisoLayers4({seed = 10000, height = 600, debug = fal
     for (let i = 0; i < numPages; i++) {
       loadingDiv.innerHTML = `<div>Processing page ${i + 1} of ${numPages}...</div>`;
 
-      const pageX = firstPageStartX + i * viewBoxWidthPerPage;
-      const viewBoxWidth = viewBoxWidthPerPage;
-      const viewBoxHeight = viewBoxHeightPerPage;
+      const pageX = firstPageStartX + i * finalViewBoxWidthPerPage;
+      const viewBoxWidth = finalViewBoxWidthPerPage;
+      const viewBoxHeight = Math.max(finalViewBoxHeightPerPage, height); // Ensure full height is covered
 
       // 1. Extract close mountains layer
       const closeMountainsSvg = extractCloseMountainsLayer(fullSvg);
@@ -581,7 +599,8 @@ export async function exportRisoLayers4({seed = 10000, height = 600, debug = fal
       closeMountainsSvgElement
         .attr("viewBox", `${pageX} 0 ${viewBoxWidth} ${viewBoxHeight}`)
         .attr("width", pageWidth)
-        .attr("height", pageHeight);
+        .attr("height", pageHeight)
+        .attr("preserveAspectRatio", "xMidYMin meet");
 
       await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -596,7 +615,8 @@ export async function exportRisoLayers4({seed = 10000, height = 600, debug = fal
       farMountainsSvgElement
         .attr("viewBox", `${pageX} 0 ${viewBoxWidth} ${viewBoxHeight}`)
         .attr("width", pageWidth)
-        .attr("height", pageHeight);
+        .attr("height", pageHeight)
+        .attr("preserveAspectRatio", "xMidYMin meet");
 
       await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -611,7 +631,8 @@ export async function exportRisoLayers4({seed = 10000, height = 600, debug = fal
       treesSvgElement
         .attr("viewBox", `${pageX} 0 ${viewBoxWidth} ${viewBoxHeight}`)
         .attr("width", pageWidth)
-        .attr("height", pageHeight);
+        .attr("height", pageHeight)
+        .attr("preserveAspectRatio", "xMidYMin meet");
 
       await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -624,7 +645,8 @@ export async function exportRisoLayers4({seed = 10000, height = 600, debug = fal
       stampsSvgElement
         .attr("viewBox", `${pageX} 0 ${viewBoxWidth} ${viewBoxHeight}`)
         .attr("width", pageWidth)
-        .attr("height", pageHeight);
+        .attr("height", pageHeight)
+        .attr("preserveAspectRatio", "xMidYMin meet");
 
       await new Promise((resolve) => setTimeout(resolve, 100));
 
