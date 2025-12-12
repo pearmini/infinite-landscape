@@ -283,6 +283,7 @@ export function render({
       applyGradient(this, COLORS.background(), svg.node());
     });
 
+  const mountainsBackgroundGroup = transformGroup.append("g").attr("class", "mountains-background-group");
   const mountainsGroup = transformGroup.append("g").attr("class", "mountains-group");
 
   const zoomBehavior = d3
@@ -378,6 +379,23 @@ export function render({
       .attr("width", endX - startX)
       .attr("height", height);
 
+    // Create white background paths for mountains
+    const mountainsBackgroundPaths = mountainsBackgroundGroup
+      .selectAll("path")
+      .data(mountains, (d, i) => `${d.x}-${d.y}-${d.points.length}-${i}-bg`);
+
+    mountainsBackgroundPaths
+      .enter()
+      .append("path")
+      .attr("class", (d) => `${d.type}-bg`)
+      .merge(mountainsBackgroundPaths)
+      .attr("d", (d) => line(d.points))
+      .attr("fill", "white")
+      .attr("stroke", "none");
+
+    mountainsBackgroundPaths.exit().remove();
+
+    // Create gradient paths for mountains (on top of white background)
     const mountainsPaths = mountainsGroup
       .selectAll("path")
       .data(mountains, (d, i) => `${d.x}-${d.y}-${d.points.length}-${i}`);

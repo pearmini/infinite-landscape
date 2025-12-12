@@ -306,7 +306,7 @@ export async function exportRisoLayers({seed = 10000, height = 600, debug = fals
     }
 
     const pageHeight = height;
-    const pageWidth = pageHeight * (11 / 8);
+    const pageWidth = pageHeight * (10.5 / 8);
 
     let firstPageStartX = minX;
     if (treePositions.length >= 2) {
@@ -537,7 +537,7 @@ export async function exportRisoLayers4({seed = 10000, height = 600, debug = fal
     }
 
     const pageHeight = height;
-    const pageWidth = pageHeight * (11 / 8);
+    const pageWidth = pageHeight * (10.5 / 8);
 
     let firstPageStartX = minX;
     if (treePositions.length >= 2) {

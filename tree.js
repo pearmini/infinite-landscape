@@ -266,8 +266,8 @@ export function tree(
       children: [
         apack.text(text, {
           cellSize,
-          word: {strokeWidth: sw, stroke: "red"},
-          background: {strokeWidth: sw * 2, stroke: "red"},
+          word: {strokeWidth: sw, stroke: THEME.stamp},
+          background: {strokeWidth: sw * 2, stroke: THEME.stamp},
         }),
       ],
     });
@@ -289,7 +289,7 @@ export function tree(
           width: textWidth + textPadding * 2,
           height: textHeight + textPadding * 2,
           fill: "none",
-          stroke: "red",
+          stroke: THEME.stamp,
           strokeWidth: 1.5,
         }),
         cm.svg("text", {
@@ -299,7 +299,7 @@ export function tree(
           dx: dx,
           dy: dy,
           textAnchor: "end",
-          fill: "red",
+          fill: THEME.stamp,
           fontSize: fontSize,
           fontFamily: "monospace",
         }),

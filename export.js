@@ -206,7 +206,7 @@ export async function exportLandscapeToZip({seed = 10000, height = 600} = {}) {
 
     // Calculate pages with 17:11 aspect ratio
     const pageHeight = height;
-    const pageWidth = pageHeight * (11 / 8);
+    const pageWidth = pageHeight * (10.5 / 8);
 
     // Find the second tree position for the first page start
     let firstPageStartX = minX;
