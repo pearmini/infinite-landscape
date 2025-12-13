@@ -253,24 +253,6 @@ export function render({
 
   svg.call(zoomBehavior);
 
-  const dragBehavior = d3
-    .drag()
-    .on("start", (event) => {
-      state.x0 = event.x;
-      maybeLoad();
-    })
-    .on("drag", (event) => {
-      state.offsetX = state.x0 - event.x;
-      update();
-    })
-    .on("end", (event) => {
-      state.offsetX = 0;
-      state.currentX += state.x0 - event.x;
-      update();
-    });
-
-  svg.call(dragBehavior);
-
   const treesGroup = transformGroup.append("g").attr("class", "trees-group");
 
   update();
